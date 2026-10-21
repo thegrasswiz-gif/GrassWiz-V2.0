@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in | The Grass Wiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="theme-grasswiz auth-page">
+
+<main class="auth-card">
+  <div class="auth-brand"><div class="brand-mark">GW</div><h1>THE GRASS WIZ</h1></div>
+  <h2 id="formTitle">Welcome back</h2>
+  <p class="auth-sub" id="formSub">Sign in to manage jobs, team and payroll.</p>
+
+  <div class="auth-msg" id="msg" role="alert"></div>
+
+  <form id="loginForm" novalidate>
+    <div class="auth-field">
+      <label for="email">Email</label>
+      <input type="email" id="email" autocomplete="username" required autofocus>
+    </div>
+    <div class="auth-field" id="pwField">
+      <label for="password">Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="password" autocomplete="current-password" required>
+        <button type="button" class="pw-toggle" id="pwToggle" aria-label="Show password"><i class="fas fa-eye"></i></button>
+      </div>
+    </div>
+    <button type="submit" class="primary block" id="submitBtn">Sign in</button>
+  </form>
+  <button type="button" class="auth-link" id="modeLink">Forgot your password?</button>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/login.js"></script>
+</body>
+</html>

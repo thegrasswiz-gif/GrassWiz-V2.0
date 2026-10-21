@@ -1,0 +1,22 @@
+button { border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+button:hover { transform: translateY(-1px); }
+button.primary { background: var(--primary); color: white; }
+button.secondary { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
+button.danger { background: #fee2e2; color: #b91c1c; }
+button.warning { background: #fef3c7; color: #92400e; }
+button.success { background: #10b981; color: white; }
+button.small { padding: 6px 10px; font-size: 11px; border-radius: 6px; }
+button.icon-only { padding: 6px 8px; }
+.icon-btn { padding: 8px; border-radius: 8px; background: var(--panel); border: 1px solid var(--border); color: var(--text); cursor: pointer; display: grid; place-items: center; position: relative; }
+
+.settings-dropdown { position: absolute; top: 50px; right: 20px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); padding: 8px; display: none; flex-direction: column; gap: 5px; z-index: 60; min-width: 150px;}
+.settings-dropdown.open { display: flex; }
+.settings-dropdown button { background: transparent; color: var(--text); border: none; text-align: left; padding: 8px 12px; font-size: 13px; border-radius: 6px; width: 100%; justify-content: flex-start;}
+.settings-dropdown button:hover { background: var(--bg); }
+.settings-dropdown button.active { background: var(--primary-light); color: var(--primary); font-weight: 700; }
+body.dark-mode .settings-dropdown button.active { background: rgba(216, 27, 96, 0.2); }
+
+/* Banner shown when data fails to load */
+.app-error { max-width: 1400px; margin: 12px auto 0; padding: 10px 14px; border-radius: 8px; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.app-error.hidden { display: none; }
+body.dark-mode .app-error { background: rgba(239, 68, 68, .18); color: #fecaca; border-color: rgba(239, 68, 68, .4); }

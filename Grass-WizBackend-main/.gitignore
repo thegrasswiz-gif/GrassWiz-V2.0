@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Environment variables (NEVER upload these)
+.env
+.env.local
+
+# Zip files
+*.zip
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+# Uploaded employee documents (legacy API)
+uploads/

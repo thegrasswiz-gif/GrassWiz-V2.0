@@ -1,0 +1,15 @@
+header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-mark { width: 32px; height: 32px; border-radius: 8px; background: var(--primary); color: white; display: grid; place-items: center; font-weight: 800; font-size: 16px; }
+.brand h1 { font-size: 16px; margin: 0; font-weight: 800; }
+.nav-toggle { display: flex; background: var(--bg); border-radius: 8px; padding: 4px; border: 1px solid var(--border); margin-left: 20px; }
+.nav-toggle button { background: transparent; border: none; padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+.nav-toggle button.active { background: var(--panel); color: var(--primary); box-shadow: var(--shadow); }
+
+.today-display { font-size: 13px; font-weight: 700; color: var(--primary); background: var(--primary-light); padding: 6px 12px; border-radius: 20px; margin-left: 20px; }
+body.dark-mode .today-display { background: rgba(216, 27, 96, 0.2); }
+
+.header-center { flex: 1; max-width: 250px; margin: 0 20px; position: relative; }
+.header-center i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; }
+.header-center input { width: 100%; padding: 8px 12px 8px 34px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; background: var(--bg); color: var(--text); transition: all 0.2s; }
+.header-center input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }

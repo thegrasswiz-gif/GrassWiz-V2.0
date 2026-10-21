@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en" class="auth-pending">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Grass Wiz | Job Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/header.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/calendar.css">
+<link rel="stylesheet" href="css/team.css">
+<link rel="stylesheet" href="css/actions.css">
+<link rel="stylesheet" href="css/customers.css">
+<link rel="stylesheet" href="css/modals.css">
+<link rel="stylesheet" href="css/responsive.css">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="theme-grasswiz">
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">GW</div>
+    <div><h1>THE GRASS WIZ</h1></div>
+  </div>
+  
+  <div class="nav-toggle">
+    <button id="navCalendar" class="active"><i class="fas fa-calendar-alt"></i> Calendar</button>
+    <button id="navCustomers"><i class="fas fa-address-book"></i> Customers</button>
+    <button id="navInspections"><i class="fas fa-clipboard-check"></i> Inspections</button>
+    <button id="navTeam"><i class="fas fa-users"></i> Team & Payroll</button>
+  </div>
+
+  <div class="today-display" id="topTodayDate">Today</div>
+
+  <div class="header-center" id="searchContainer">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchInput" placeholder="Search name, phone, address..." autocomplete="off">
+    <div id="searchSuggest" class="search-suggest hidden"></div>
+  </div>
+  <div class="actions" style="display:flex; gap:10px; align-items:center;">
+    
+    <span class="user-email" id="userEmail" title="Signed in as"></span>
+    <button class="icon-btn" id="logoutBtn" title="Sign out"><i class="fas fa-right-from-bracket"></i></button>
+    <button class="icon-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
+    <div class="settings-dropdown" id="settingsDropdown">
+      <div style="font-size:11px; font-weight:700; color:var(--text-muted); padding:4px 12px; text-transform:uppercase;">Select Theme</div>
+      <button class="theme-option active" data-theme="theme-grasswiz" onclick="changeTheme('theme-grasswiz')"><i class="fas fa-leaf" style="color:#d81b60; margin-right:5px;"></i> Grass Wiz (Pink)</button>
+      <button class="theme-option" data-theme="theme-ocean" onclick="changeTheme('theme-ocean')"><i class="fas fa-water" style="color:#0284c7; margin-right:5px;"></i> Ocean (Blue)</button>
+      <button class="theme-option" data-theme="theme-royal" onclick="changeTheme('theme-royal')"><i class="fas fa-crown" style="color:#7e22ce; margin-right:5px;"></i> Royal (Purple)</button>
+      <button class="theme-option" data-theme="theme-sunset" onclick="changeTheme('theme-sunset')"><i class="fas fa-sun" style="color:#ea580c; margin-right:5px;"></i> Sunset (Orange)</button>
+    </div>
+
+    <button class="icon-btn" id="darkModeToggle"><i class="fas fa-moon"></i></button>
+    <button class="primary" id="addBtn"><i class="fas fa-plus"></i> Add Job</button>
+  </div>
+</header>
+
+<div id="appError" class="app-error hidden" role="alert"></div>
+
+<main>
+  <div id="viewCalendar" class="view active">
+    <div class="toolbar">
+      <div class="monthnav">
+        <button class="secondary" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+        <h2 id="monthTitle">Month Year</h2>
+        <button class="secondary" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+        <button class="secondary" id="todayBtn" style="margin-left:4px; font-weight:700;">Today</button>
+      </div>
+      <select id="customerFilter" class="customer-filter" title="Show one customer's bookings. The number is their jobs (inspections not counted)."><option value="">All customers</option></select>
+    </div>
+
+    <section class="stats">
+      <div class="stat clickable" data-stat="completed" role="button" tabindex="0" title="See the completed jobs"><i class="fas fa-calendar-check"></i><span id="statMonthLabel">Jobs Completed This Month</span><strong id="statMonth">0</strong></div>
+      <div class="stat clickable" data-stat="upcoming" role="button" tabindex="0" title="See the upcoming jobs"><i class="fas fa-clock"></i><span>Upcoming jobs</span><strong id="statUpcoming">0</strong></div>
+      <div class="stat clickable" data-stat="recurring" role="button" tabindex="0" title="See the recurring jobs"><i class="fas fa-sync-alt"></i><span>Recurring Jobs</span><strong id="statRecurring">0</strong></div>
+      <div class="stat clickable" data-stat="due" role="button" tabindex="0" title="Customers with nothing booked whose last job was 20+ days ago"><i class="fas fa-exclamation-triangle"></i><span>Due for Next Service</span><strong id="statDue">0</strong></div>
+    </section>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="calendar-scroll" id="calendarScroll"></div>
+      </section>
+
+      <aside class="panel">
+        <div class="sidebar-header">
+          <div class="tabs">
+            <button class="active" id="tabUpcoming"><i class="fas fa-rocket"></i> Upcoming</button>
+            <button id="tabSelected"><i class="fas fa-calendar-day"></i> Selected</button>
+          </div>
+          <div class="sidehead">
+            <div>
+              <h3 id="selectedTitle">Selected Date</h3>
+              <div class="muted" id="selectedSubtitle">Jobs scheduled for this date</div>
+            </div>
+            <button class="small secondary" id="addSelectedBtn"><i class="fas fa-plus"></i></button>
+          </div>
+        </div>
+        <div class="joblist" id="upcomingList"></div>
+        <div class="joblist hidden" id="jobList"></div>
+      </aside>
+    </div>
+  </div>
+
+  <div id="viewActionList" class="view">
+    <div class="toolbar action-toolbar">
+      <div class="action-heading">
+        <button class="secondary" id="actionBackBtn"><i class="fas fa-arrow-left"></i> Back to Calendar</button>
+        <div>
+          <h2 id="actionTitle">Jobs</h2>
+          <div class="action-sub" id="actionSubtitle"></div>
+        </div>
+      </div>
+      <div class="monthnav hidden" id="actionMonthNav">
+        <button class="secondary" id="actionPrevMonth" aria-label="Previous month"><i class="fas fa-chevron-left"></i></button>
+        <h2 id="actionMonthTitle">Month Year</h2>
+        <button class="secondary" id="actionNextMonth" aria-label="Next month"><i class="fas fa-chevron-right"></i></button>
+        <button class="secondary" id="actionJumpBtn"><i class="fas fa-calendar-day"></i> Jump to Month</button>
+        <input type="month" id="actionMonthPicker" class="month-picker" aria-label="Jump to month" tabindex="-1">
+      </div>
+    </div>
+    <section class="panel action-panel"><div class="action-grid" id="actionGrid"></div></section>
+  </div>
+
+  <div id="viewInspections" class="view">
+    <div class="toolbar action-toolbar">
+      <div class="action-heading">
+        <button class="secondary" id="inspBackBtn"><i class="fas fa-arrow-left"></i> Back to Calendar</button>
+        <div>
+          <h2>Site Inspections</h2>
+          <div class="action-sub" id="inspectionSubtitle"></div>
+        </div>
+      </div>
+      <div class="monthnav" id="inspectionFilters">
+        <button class="secondary" data-filter="upcoming">Upcoming <span class="cnt"></span></button>
+        <button class="secondary" data-filter="overdue">Past due <span class="cnt"></span></button>
+        <button class="secondary" data-filter="completed">Completed <span class="cnt"></span></button>
+        <button class="secondary" data-filter="all">All <span class="cnt"></span></button>
+        <button class="primary" id="inspAddBtn"><i class="fas fa-plus"></i> New Inspection</button>
+      </div>
+    </div>
+    <section class="panel action-panel"><div class="action-grid" id="inspectionGrid"></div></section>
+  </div>
+
+  <div id="viewCustomers" class="view">
+    <div class="toolbar action-toolbar">
+      <div class="action-heading">
+        <div>
+          <h2>Customers</h2>
+          <div class="action-sub" id="custTabSubtitle"></div>
+        </div>
+      </div>
+      <div class="header-center" style="display:block; position:relative; min-width:260px;">
+        <i class="fas fa-search"></i>
+        <input type="text" id="custTabSearch" placeholder="Search name, phone, address..." autocomplete="off">
+      </div>
+    </div>
+    <section class="panel action-panel"><div id="customerGroups"></div></section>
+  </div>
+
+  <div id="viewTeam" class="view">
+    <div class="team-header">
+      <div>
+        <h2 style="margin:0; font-size:20px;">Team Directory</h2>
+        <p style="margin:4px 0 0; font-size:13px; color:var(--text-muted);">Manage employee profiles, documents, and payroll.</p>
+      </div>
+      <button class="primary" id="addEmployeeBtn"><i class="fas fa-user-plus"></i> Add Employee</button>
+    </div>
+    <div class="team-grid" id="teamGrid"></div>
+  </div>
+</main>
+
+<div class="modalback" id="jobModalBack">
+ <div class="modal">
+  <h2 id="jobModalTitle">Add a Job</h2>
+  <form id="jobForm">
+   <input type="hidden" id="jobId">
+   <div class="kind-switch" id="kindSwitch" role="tablist">
+     <button type="button" data-kind="job" class="active">Schedule Job</button>
+     <button type="button" data-kind="inspection">Site Inspection</button>
+   </div>
+   <div class="formgrid">
+    <div class="field full"><label>Phone *</label><input id="phone" inputmode="tel" autocomplete="off" required placeholder="876-555-1234 or +1 876 555 1234">
+      <div id="customerLookup" class="lookup hidden"></div></div>
+    <div class="field full"><label>Client Name *</label><input id="customer" required placeholder="e.g. Shaniel Williams"></div>
+    <div class="field full"><label>Email</label><input id="email" type="email" placeholder="client@email.com"></div>
+    <div class="field full"><label>Job Address / Area *</label><input id="address" required placeholder="Street, community, parish"></div>
+    <div class="field full"><label>Directions</label><input id="directions" placeholder="Landmarks, gate codes, etc."></div>
+    
+    <div class="field full">
+        <label>Zone / Parish *</label>
+        <input id="zone" list="zoneList" required placeholder="e.g. St. Catherine" oninput="checkZoneSuggestion()">
+        <datalist id="zoneList"><option>St. Catherine</option><option>Kingston</option><option>St. Andrew</option><option>Clarendon</option><option>Manchester</option></datalist>
+        <div id="zoneSuggestion" class="hidden" style="background:var(--primary-light); color:var(--primary); padding:8px; border-radius:6px; font-size:12px; margin-top:5px; cursor:pointer; border:1px solid var(--primary);"></div>
+    </div>
+    <div class="field"><label id="technicianLabel">Technician</label><select id="technician"><option value="">-- Assign Tech --</option></select></div>
+    
+    <div class="field"><label>Yard Size *</label><select id="yardSize" required><option value="">-- Select --</option><option>Small</option><option>Medium</option><option>Large</option></select></div>
+    <div class="field"><label>Date *</label><input type="date" id="jobDate" required></div>
+    
+    <div class="field full"><label>Estimated Duration</label><select id="duration"><option value="1">1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option><option value="4">4 hours</option><option value="6">6 hours</option><option value="8">Full day</option></select></div>
+    
+    <div class="field full"><label>Property Areas</label>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; font-size:12px; background:var(--bg); padding:10px; border-radius:6px; border:1px solid var(--border);">
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="propertyAreas" value="Front"> Front</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="propertyAreas" value="Back"> Back</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="propertyAreas" value="Left Side"> Left Side</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="propertyAreas" value="Right Side"> Right Side</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="propertyAreas" value="Sidewalk Left"> Sidewalk Left</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="propertyAreas" value="Sidewalk Right"> Sidewalk Right</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="propertyAreas" value="Driveway"> Driveway</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="propertyAreas" value="Garden" id="chkGarden" onchange="document.getElementById('gardenOptions').classList.toggle('hidden', !this.checked);"> Garden</label>
+      </div>
+      <div id="gardenOptions" class="hidden" style="display:flex; gap:15px; font-size:12px; padding:10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; margin-top:5px;">
+        <span style="font-weight:700;">Number of Gardens:</span>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="gardenDetails" value="1"> 1</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="gardenDetails" value="2"> 2</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="gardenDetails" value="3"> 3</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="gardenDetails" value="4"> 4</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="gardenDetails" value="5"> 5</label>
+      </div>
+    </div>
+
+    <div class="field full"><label>Services Required</label>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; font-size:12px; background:var(--bg); padding:10px; border-radius:6px; border:1px solid var(--border);">
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Lawn Mowing"> Lawn Mowing</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Edging"> Edging</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Weed Removal"> Weed Removal</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Hedge Trimming"> Hedge Trimming</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Tree Trimming"> Tree Trimming</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Mulching"> Mulching</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Fertilizing"> Fertilizing</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Yard Clean-Up"> Yard Clean-Up</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Planting"> Planting</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Sod Installation"> Sod Installation</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Irrigation Repair"> Irrigation Repair</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Pressure Washing"> Pressure Washing</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Yard-cut"> Yard-cut</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Garbage Disposal"> Garbage Disposal</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Pest Control"> Pest Control</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Hardscaping"> Hardscaping</label>
+        <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="servicesRequired" value="Other" id="chkOtherService"> Other</label>
+      </div>
+      <input id="otherService" class="hidden" style="margin-top:10px;" placeholder="Please specify other service...">
+    </div>
+
+    <div class="field full"><label>Customer Remarks</label><textarea id="customerRemarks" placeholder="Any special notes, gate codes, or requests..."></textarea></div>
+    <div class="field full"><label>Technician Recommendations</label><textarea id="recommendations"></textarea></div>
+    <div class="field full"><label>Supervisor Remarks</label><textarea id="supervisorRemarks"></textarea></div>
+    
+    <div class="field"><label>Reminder</label><select id="reminder"><option value="1440">24 hours before</option><option value="120">2 hours before</option><option value="60" selected>1 hour before</option><option value="30">30 minutes before</option><option value="0">At job start</option><option value="-1">No reminder</option></select></div>
+    
+    <div class="field" id="repeatField"><label>Recurring Options</label>
+      <select id="repeat" onchange="document.getElementById('repeatUntilContainer').classList.toggle('hidden', this.value === 'none');">
+        <option value="none">Does not repeat</option>
+        <option value="weekly">Every week</option>
+        <option value="biweekly">Every 2 weeks</option>
+        <option value="monthly">Monthly (Same date)</option>
+        <option value="last_thursday">Monthly (Last Thursday)</option>
+        <option value="last_friday">Monthly (Last Friday)</option>
+      </select>
+    </div>
+    
+    <div class="field hidden" id="repeatUntilContainer">
+      <label>Repeat Until *</label>
+      <input type="date" id="repeatUntil">
+    </div>
+
+   </div>
+   <div class="modalfoot">
+     <button type="button" class="danger hidden" id="deleteJobBtn"><i class="fas fa-trash"></i> Delete</button>
+     <div class="right">
+       <button type="button" class="secondary" id="cancelJobBtn">Cancel</button>
+       <button type="submit" class="primary" id="saveJobBtn">Save Job</button>
+     </div>
+   </div>
+  </form>
+ </div>
+</div>
+
+<div class="modalback" id="customerModalBack">
+ <div class="modal">
+  <h2>Customer</h2>
+  <form id="customerForm">
+   <input type="hidden" id="custId">
+   <div class="formgrid">
+    <div class="field full"><label>Phone *</label><input id="custPhone" required inputmode="tel"></div>
+    <div class="field full"><label>Name *</label><input id="custName" required></div>
+    <div class="field full"><label>Email</label><input id="custEmail" type="email"></div>
+    <div class="field full"><label>Address</label><input id="custAddress"></div>
+    <div class="field full"><label>Directions</label><input id="custDirections"></div>
+    <div class="field full"><label>Zone / Parish</label><input id="custZone"></div>
+   </div>
+   <p id="custMembership" style="margin:10px 0 0; font-weight:700;"></p>
+   <p class="action-sub" id="custSummary" style="margin:10px 0 0;"></p>
+   <ul class="cust-history" id="custHistory"></ul>
+   <div class="modalfoot">
+     <div style="display:flex; gap:8px; flex-wrap:wrap;">
+       <button type="button" class="secondary" id="custBookJob"><i class="fas fa-calendar-plus"></i> Schedule Job</button>
+       <button type="button" class="secondary" id="custBookInsp"><i class="fas fa-clipboard-check"></i> Book Inspection</button>
+     </div>
+     <div class="right">
+       <button type="button" class="secondary" id="custClose">Close</button>
+       <button type="submit" class="primary">Save Changes</button>
+     </div>
+   </div>
+  </form>
+ </div>
+</div>
+
+<div class="modalback" id="printPromptModalBack">
+ <div class="print-modal">
+  <i class="fas fa-check-circle" style="font-size:40px; color:#10b981; margin-bottom:15px;"></i>
+  <h3 id="printPromptTitle">Job Saved Successfully!</h3>
+  <p id="printPromptText">Do you want to print the Job Order for this job?</p>
+  <div class="btn-group">
+    <button class="secondary" onclick="closePrintPrompt()">No, Thanks</button>
+    <button class="primary" onclick="confirmPrint()"><i class="fas fa-print"></i> Yes, Print</button>
+  </div>
+ </div>
+</div>
+
+<div class="modalback" id="completeModalBack">
+ <div class="modal" style="width: min(500px, 100%);">
+  <h2>Complete Job</h2>
+  <div class="field">
+    <label>Closing Remarks (How did it go? Any issues?) *</label>
+    <textarea id="closingRemarksInput" required placeholder="e.g. Took 3 hours. Client complained about the back gate. No issues otherwise."></textarea>
+  </div>
+  <div class="modalfoot">
+    <button class="secondary" onclick="document.getElementById('completeModalBack').classList.remove('open')">Cancel</button>
+    <button class="primary" onclick="submitCompleteJob()">Save & Continue</button>
+  </div>
+ </div>
+</div>
+
+<div class="modalback" id="recurringModalBack">
+ <div class="modal" style="width: min(500px, 100%);">
+  <h2>Is this a recurring job?</h2>
+  <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">If yes, we will automatically schedule the next job.</p>
+  <div style="display:flex; gap:10px; margin-bottom:20px;">
+    <button class="secondary" style="flex:1;" onclick="finishCompleteFlow(false)">No</button>
+    <button class="primary" style="flex:1;" onclick="showNextRecurringDate()">Yes</button>
+  </div>
+  <div id="nextRecurringSection" class="hidden">
+    <div class="field" style="margin-bottom:20px;">
+      <label>Recurring Options</label>
+      <select id="nextRecurringOption">
+        <option value="weekly">Every week</option>
+        <option value="biweekly">Every 2 weeks</option>
+        <option value="monthly">Monthly (Same date)</option>
+        <option value="last_thursday">Monthly (Last Thursday)</option>
+        <option value="last_friday">Monthly (Last Friday)</option>
+      </select>
+    </div>
+    <div class="field" style="margin-bottom:20px;">
+      <label>Repeat Until</label>
+      <input type="date" id="nextRecurringUntil">
+    </div>
+    <button class="primary" style="width:100%; justify-content:center;" onclick="finishCompleteFlow(true)">Schedule Next Job(s)</button>
+  </div>
+ </div>
+</div>
+
+<div class="modalback" id="rescheduleModalBack">
+ <div class="modal" style="width: min(400px, 100%);">
+  <h2>Reschedule Job</h2>
+  <div class="field" style="margin-bottom:20px;">
+    <label>New Date</label>
+    <input type="date" id="rescheduleDate">
+  </div>
+  <div class="modalfoot">
+    <button class="secondary" onclick="document.getElementById('rescheduleModalBack').classList.remove('open')">Cancel</button>
+    <button class="primary" onclick="submitReschedule()">Save</button>
+  </div>
+ </div>
+</div>
+
+<div class="modalback" id="employeeModalBack">
+ <div class="modal">
+  <h2 id="employeeModalTitle">Add New Employee</h2>
+  <form id="employeeForm" enctype="multipart/form-data">
+   <input type="hidden" id="empId">
+   <div class="formgrid">
+    <div class="field full"><label>Full Name *</label><input id="empName" required></div>
+    <div class="field"><label>Phone</label><input id="empPhone"></div>
+    <div class="field"><label>Email</label><input id="empEmail" type="email"></div>
+    <div class="field full"><label>Address</label><input id="empAddress"></div>
+    
+    <div class="field"><label>Department</label><select id="empDept"><option>Landscape</option><option>Office</option><option>Maintenance</option></select></div>
+    <div class="field"><label>Employment Status</label>
+      <select id="empStatus" onchange="toggleTerminationFields()">
+        <option value="Trial">Trial</option>
+        <option value="Probation">Probation</option>
+        <option value="Full-Time">Full-Time</option>
+        <option value="Part-Time">Part-Time</option>
+        <option value="Contract">Contract</option>
+        <option value="Terminated">Terminated</option>
+      </select>
+    </div>
+    
+    <div class="field"><label>Hire Date</label><input type="date" id="empHireDate" required></div>
+    <div class="field"><label>Probation End Date</label><input type="date" id="empProbationEnd"></div>
+    
+    <div class="field"><label>Base Monthly Rate ($)</label><input type="number" id="empRate" value="100000"></div>
+    <div class="field"><label>NIS Number</label><input id="empNis"></div>
+    <div class="field"><label>TRN Number</label><input id="empTrn"></div>
+    <div class="field"><label>Driver's License</label><input id="empLicense"></div>
+    
+    <div class="field full"><label>General Notes</label><textarea id="empNotes"></textarea></div>
+
+    <div id="terminationFields" class="field full hidden" style="background:#fee2e2; padding:12px; border-radius:8px; border:1px solid #ef4444;">
+      <label style="color:#991b1b; margin-bottom:8px; display:block;">Termination Details</label>
+      <label style="font-size:11px; font-weight:700;">Reason for Termination</label>
+      <input id="empTerminationReason" style="margin-bottom:8px;">
+      <label style="font-size:11px; font-weight:700;">Termination Date</label>
+      <input type="date" id="empTerminationDate" style="margin-bottom:8px;">
+      <label style="font-size:11px; font-weight:700;">Eligible for Rehire?</label>
+      <select id="empRehire"><option value="true">Yes</option><option value="false">No</option></select>
+    </div>
+
+    <div class="field full" style="margin-top:10px; border-top:1px dashed var(--border); padding-top:10px;">
+      <label>Upload ID / Contract (PDF or Image)</label>
+      <input type="file" id="empDocument" accept=".pdf,image/*">
+    </div>
+   </div>
+   <div class="modalfoot">
+     <button type="button" class="secondary" onclick="document.getElementById('employeeModalBack').classList.remove('open')">Cancel</button>
+     <button type="submit" class="primary">Save Employee</button>
+   </div>
+  </form>
+ </div>
+</div>
+
+<div class="modalback" id="profileModalBack">
+ <div class="modal" style="width: min(1000px, 100%);">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+    <div>
+      <h2 id="profName" style="margin:0;">Employee Name</h2>
+      <span id="profStatus" class="employee-badge" style="margin-top:5px; display:inline-block;">Status</span>
+      <p id="profDept" style="margin:5px 0 0; color:var(--text-muted); font-size:13px;">Department</p>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="secondary" id="profEditBtn"><i class="fas fa-edit"></i> Edit Profile</button>
+      <button class="secondary" onclick="document.getElementById('profileModalBack').classList.remove('open')"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+
+  <div id="terminationBanner" class="hidden" style="background:#fee2e2; color:#991b1b; padding:12px; border-radius:8px; margin-bottom:20px; font-weight:600; font-size:13px;"></div>
+
+  <div class="formgrid" style="margin-bottom:20px;">
+    <div style="font-size:13px; line-height:1.8;">
+      <strong>Contact Info</strong><br>
+      📞 <span id="profPhone">-</span><br>
+      📧 <span id="profEmail">-</span><br>
+      📍 <span id="profAddress">-</span>
+    </div>
+    <div style="font-size:13px; line-height:1.8;">
+      <strong>Payroll Info</strong><br>
+      💰 Base Rate: $<span id="profRate">0</span><br>
+      🏛️ NIS: <span id="profNis">-</span> | TRN: <span id="profTrn">-</span><br>
+      🚗 License: <span id="profLicense">-</span>
+    </div>
+  </div>
+
+  <div style="background:var(--bg); padding:12px; border-radius:8px; margin-bottom:20px; font-size:13px;">
+    <strong>Notes:</strong> <span id="profNotes">None</span>
+  </div>
+
+  <div style="display:flex; gap:10px; margin-bottom:20px;">
+    <button class="secondary" id="profViewDocBtn" style="flex:1;"><i class="fas fa-file-pdf"></i> View Uploaded Document</button>
+    <button class="primary" id="profPayrollBtn" style="flex:1;"><i class="fas fa-file-invoice-dollar"></i> Generate Payslip</button>
+  </div>
+
+  <div class="pay-summary">
+    <div>
+      <span>Accumulated Pay (26th - 25th)</span>
+      <strong id="profAccumulatedPay">$0.00</strong>
+    </div>
+    <div style="border-left:1px solid var(--primary); border-right:1px solid var(--primary); padding:0 20px;">
+      <span>Days Worked Since Hire (Mon-Fri)</span>
+      <strong id="profDaysWorkedCounter">0 / 110</strong>
+    </div>
+    <div>
+      <span>Daily Rate</span>
+      <strong id="profDailyRate">$0.00</strong>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid var(--border); padding-top:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3 style="margin:0; font-size:16px;">Attendance Calendar</h3>
+      <div style="font-size:12px; color:var(--text-muted); display:flex; gap:15px; align-items:center;">
+        <div><span style="color:#10b981; font-weight:800;">Present: <span id="legendPresent">0</span></span></div>
+        <div><span style="color:#ef4444; font-weight:800;">Absent: <span id="legendAbsent">0</span></span></div>
+      </div>
+    </div>
+
+    <div class="att-calendar-header">
+        <button class="secondary small" onclick="changeAttMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+        <h4 id="attMonthTitle">Month Year</h4>
+        <button class="secondary small" onclick="changeAttMonth(1)"><i class="fas fa-chevron-right"></i></button>
+        <button class="warning small" id="unlockAttBtn" onclick="unlockAttendance()" style="margin-left:10px;"><i class="fas fa-lock"></i> Unlock Past</button>
+    </div>
+    
+    <div class="calendar-scroll" style="height: auto; border:1px solid var(--border); border-radius:8px;" id="profAttendanceScroll"></div>
+  </div>
+ </div>
+</div>
+
+<div class="modalback" id="attActionModalBack">
+ <div class="att-modal">
+  <h3 id="attActionDate">Mark Attendance</h3>
+  <p>What is the status for this day?</p>
+  
+  <div id="attStep1">
+    <div class="att-btn-group">
+      <button class="primary" onclick="setAttendance('Present')"><i class="fas fa-check"></i> Present</button>
+      <button class="danger" onclick="showAbsentOptions()"><i class="fas fa-times"></i> Absent</button>
+    </div>
+    <button class="secondary" style="width:100%; justify-content:center;" onclick="document.getElementById('attActionModalBack').classList.remove('open')">Cancel</button>
+  </div>
+
+  <div id="attStep2" class="hidden">
+    <div class="att-dropdown">
+      <label>Is this Paid or Unpaid?</label>
+      <select id="attLeaveType">
+        <option value="Unpaid">Unpaid (No Show)</option>
+        <option value="Paid">Paid (Sick/Vacation)</option>
+      </select>
+    </div>
+    <div class="att-btn-group" style="margin-top:15px;">
+      <button class="secondary" onclick="document.getElementById('attStep1').classList.remove('hidden'); document.getElementById('attStep2').classList.add('hidden');">Back</button>
+      <button class="danger" onclick="setAttendance('Absent')">Confirm Absent</button>
+    </div>
+  </div>
+ </div>
+</div>
+
+<div class="modalback" id="payslipModalBack">
+ <div class="modal" style="width: min(850px, 100%);">
+  <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+    <h2 style="margin:0;">Generate Payslip</h2>
+    <button class="secondary" onclick="document.getElementById('payslipModalBack').classList.remove('open')"><i class="fas fa-times"></i></button>
+  </div>
+  
+  <div class="formgrid" style="margin-bottom:20px;">
+    <div class="field" style="grid-column: 1 / -1; background: var(--primary-light); padding: 12px; border-radius: 8px; color: var(--primary); font-weight: 700; border: 1px solid var(--primary);">
+      <i class="fas fa-calendar-alt"></i> Pay Cycle: <span id="displayPayCycle">Calculating...</span>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:20px; margin-bottom:20px; background:var(--bg); padding:16px; border-radius:8px;">
+    <div style="flex:1;">
+      <label style="font-size:12px; font-weight:700;">Manual Overrides</label><br>
+      <label style="font-size:13px; display:block; margin-top:8px;"><input type="checkbox" id="cbBonus"> Add Bonus ($)</label>
+      <input type="text" inputmode="decimal" id="inputBonus" class="hidden" placeholder="e.g. 5000" style="margin-top:4px; width:100%; padding:6px; border:1px solid var(--border); border-radius:4px;">
+      
+      <label style="font-size:13px; display:block; margin-top:8px;"><input type="checkbox" id="cbTax"> Deduct Tax ($)</label>
+      <input type="text" inputmode="decimal" id="inputTax" class="hidden" placeholder="e.g. 25000" style="margin-top:4px; width:100%; padding:6px; border:1px solid var(--border); border-radius:4px;">
+      
+      <label style="font-size:13px; display:block; margin-top:8px;"><input type="checkbox" id="cbAdvance"> Salary Advance / Deduction ($)</label>
+      <input type="text" inputmode="decimal" id="inputAdvance" class="hidden" placeholder="e.g. 10000" style="margin-top:4px; width:100%; padding:6px; border:1px solid var(--border); border-radius:4px;">
+    </div>
+    <div style="flex:1; font-size:13px; line-height:1.8;">
+      <strong>Auto-Calculated Pay</strong><br>
+      Days Worked: <span id="calcDaysWorked">0</span><br>
+      Absences: <span id="calcAbsences">0</span><br>
+      Gross Earnings: $<span id="calcGrossPay">0.00</span><br>
+      <strong style="margin-top:8px; display:block; color:var(--primary); font-size:16px;">Net Pay: $<span id="calcLiveNetPay">0.00</span></strong>
+    </div>
+  </div>
+
+  <div id="payslipHistorySection" class="hidden" style="margin-bottom:20px; border-top:1px solid var(--border); padding-top:20px;">
+    <h3 style="margin:0 0 10px; font-size:16px;">Payslip History</h3>
+    <div id="payslipHistoryList" style="max-height:150px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; background:var(--bg);"></div>
+  </div>
+
+  <div style="display:flex; justify-content:flex-end; gap:12px; margin-bottom:20px;">
+    <button class="secondary" id="btnPreviewPayslip"><i class="fas fa-eye"></i> Preview (No Save)</button>
+    <button class="primary" id="btnGeneratePayslip">Save & Print</button>
+  </div>
+ </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/state.js"></script>
+<script src="js/customers.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/actions.js"></script>
+<script src="js/membership.js"></script>
+<script src="js/inspections.js"></script>
+<script src="js/customer-ui.js"></script>
+<script src="js/customers-tab.js"></script>
+<script src="js/jobs.js"></script>
+<script src="js/team.js"></script>
+<script src="js/attendance.js"></script>
+<script src="js/payroll.js"></script>
+<script src="js/print.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

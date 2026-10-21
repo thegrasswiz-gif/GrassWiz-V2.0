@@ -1,0 +1,39 @@
+/* Job / Site Inspection switch inside the Add form */
+.kind-switch { display: flex; gap: 0; margin: 0 0 14px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.kind-switch.hidden { display: none !important; }
+.kind-switch button { flex: 1; border: 0; border-radius: 0; background: var(--bg); color: var(--text-muted); padding: 9px 12px; font-weight: 700; cursor: pointer; }
+.kind-switch button.active { background: var(--primary); color: #fff; }
+
+/* phone lookup banner */
+.lookup { margin-top: 6px; padding: 8px 10px; border-radius: 6px; font-size: 12px; line-height: 1.4; background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary); }
+.lookup.new { background: var(--bg); color: var(--text-muted); border-color: var(--border); }
+
+/* inspections on the calendar and in cards */
+.badge-inspection { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: #7c3aed; color: #fff; margin-right: 4px; }
+.jobchip.inspection, .jobcard.inspection { border-left: 3px solid #7c3aed; }
+.jobchip.inspection { background: rgba(124,58,237,.14); color: #6d28d9; }
+body.dark-mode .jobchip.inspection { color: #c4b5fd; }
+
+/* search suggestions */
+.search-wrap { position: relative; }
+.search-suggest { position: absolute; left: 0; right: 0; top: 100%; z-index: 30; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.18); max-height: 300px; overflow-y: auto; margin-top: 4px; }
+.search-suggest.hidden { display: none !important; }
+.search-suggest .sugg { padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border); }
+.search-suggest .sugg:last-child { border-bottom: 0; }
+.search-suggest .sugg:hover, .search-suggest .sugg:focus { background: var(--primary-light); outline: none; }
+.search-suggest .sugg small { display: block; color: var(--text-muted); font-size: 11px; }
+
+.cust-history { font-size: 12px; color: var(--text-muted); margin: 8px 0 0; padding-left: 18px; }
+#searchContainer { position: relative; }
+
+.customer-filter { max-width: 280px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text); margin-left: auto; }
+
+.badge-tier { display: inline-block; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; color: #fff; margin-right: 4px; }
+
+/* Customers tab */
+.tier-group { margin-bottom: 26px; }
+.tier-head { display: flex; align-items: center; gap: 10px; font-size: 14px; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 2px solid; }
+.tier-head .badge-tier { font-size: 12px; padding: 4px 9px; margin: 0; }
+.tier-count { margin-left: auto; font-weight: 800; color: var(--text-muted); }
+.cust-card { cursor: pointer; }
+.cust-card:hover, .cust-card:focus-visible { box-shadow: 0 4px 14px rgba(0,0,0,.14); outline: none; }

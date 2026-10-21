@@ -1,0 +1,15 @@
+.team-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; overflow-y: auto; padding-bottom: 20px; }
+.employee-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
+.employee-card:hover { transform: translateY(-2px); border-color: var(--primary); }
+.employee-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.employee-header h3 { margin: 0; font-size: 16px; font-weight: 800; }
+.employee-badge { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 20px; text-transform: uppercase; }
+.badge-Trial { background: #fef3c7; color: #92400e; }
+.badge-Probation { background: #ffedd5; color: #c2410c; }
+.badge-Full-Time { background: #d1fae5; color: #065f46; }
+.badge-Part-Time { background: #dbeafe; color: #1e40af; }
+.badge-Contract { background: #f3e8ff; color: #6b21a8; }
+.badge-Terminated { background: #fee2e2; color: #991b1b; }
+.employee-dept { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.quick-actions { display: flex; gap: 8px; margin-top: 8px; border-top: 1px solid var(--border); padding-top: 12px; flex-wrap: wrap; }

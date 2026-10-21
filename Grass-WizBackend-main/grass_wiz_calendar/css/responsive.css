@@ -1,0 +1,9 @@
+@media(max-width: 900px) {
+  .layout { grid-template-columns: 1fr; height: auto; }
+  .calendar-scroll { height: 60vh; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  header { flex-wrap: wrap; height: auto; padding: 12px; gap: 12px; }
+  .header-center { order: 3; max-width: 100%; margin: 0; width: 100%; }
+  .formgrid { grid-template-columns: 1fr; }
+  .field.full { grid-column: auto; }
+}

@@ -1,0 +1,16 @@
+# Netlify settings: the website is the grass_wiz_calendar folder (no build step)
+[build]
+  publish = "grass_wiz_calendar"
+
+# Old bookmark from before the file was renamed
+[[redirects]]
+  from = "/grass_wiz_calendar.html"
+  to = "/index.html"
+  status = 301
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "same-origin"
