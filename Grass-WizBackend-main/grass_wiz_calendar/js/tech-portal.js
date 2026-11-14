@@ -4,6 +4,10 @@
 // login can only read their own jobs and can only complete them through
 // gw_complete_my_job() — this file decides what the page shows.
 
+// Techs without a real email sign in with a username; the office sets the
+// employee record's Email and the Auth user to <username> + TECH_LOGIN_DOMAIN
+// (defined in utils.js — a synthetic address, no real mailbox needed).
+
 let techName = null;
 let techJobs = [];
 let portalJobId = null;
@@ -27,7 +31,9 @@ async function portalLogin(e) {
     btn.disabled = true;
     $('loginMsg').textContent = '';
     try {
-        await signIn($('email').value.trim(), $('password').value);
+        let ident = $('email').value.trim().toLowerCase();
+        if (!ident.includes('@')) ident = ident.replace(/[^a-z0-9._-]/g, '') + TECH_LOGIN_DOMAIN;
+        await signIn(ident, $('password').value);
         const session = await getSession();
         if (session) await identifyTech(session);
     } catch (err) {

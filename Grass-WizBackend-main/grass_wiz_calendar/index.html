@@ -390,7 +390,7 @@
    <div class="formgrid">
     <div class="field full"><label>Full Name *</label><input id="empName" required></div>
     <div class="field"><label>Phone</label><input id="empPhone"></div>
-    <div class="field"><label>Email</label><input id="empEmail" type="email"></div>
+    <div class="field"><label>Email / Portal username</label><input id="empEmail" type="text" placeholder="email or username" onchange="normalizePortalEmail(this)"></div>
     <div class="field full"><label>Address</label><input id="empAddress"></div>
     
     <div class="field"><label>Department</label><select id="empDept"><option>Landscape</option><option>Office</option><option>Maintenance</option></select></div>

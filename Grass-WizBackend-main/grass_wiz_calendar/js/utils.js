@@ -14,6 +14,18 @@ function esc(v) {
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// Tech-portal logins for staff with no real email: a bare username on the
+// employee record becomes <username>@tech.thegrasswizz.com, a synthetic
+// address (auto-confirmed Auth user, no mailbox exists or is needed).
+// tech-portal.js accepts the username alone and appends the same domain.
+const TECH_LOGIN_DOMAIN = '@tech.thegrasswizz.com';
+
+function normalizePortalEmail(input) {
+    const v = input.value.trim().toLowerCase();
+    if (!v) return;
+    input.value = v.includes('@') ? v : v.replace(/[^a-z0-9._-]/g, '') + TECH_LOGIN_DOMAIN;
+}
+
 // Jamaica's parishes — the Zone/Parish dropdowns
 const PARISHES = ['Clarendon','Hanover','Kingston','Manchester','Portland','Saint Andrew','Saint Ann','Saint Catherine','Saint Elizabeth','Saint James','Saint Mary','Saint Thomas','Trelawny','Westmoreland'];
 

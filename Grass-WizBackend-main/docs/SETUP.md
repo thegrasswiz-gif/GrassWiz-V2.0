@@ -37,6 +37,8 @@ The **Tech Portal** (`tech.html`, linked from the sign-in page) is a mobile page
 2. **Authentication → Users → Add user** with that same email and a password for them.
 3. Run `sql/06-tech-portal.sql` once if you have not already.
 
+**Techs without an email address:** type just a username (e.g. `donovan`) in the employee's Email field — it auto-expands to `donovan@tech.thegrasswizz.com` when you leave the field. Then create the Auth user with that same address (`donovan@tech.thegrasswizz.com`) and a password. It does not need to be a real mailbox since "Auto Confirm User" sends nothing. The tech then signs in at `tech.html` with just the username (`donovan`) + password — the portal appends the domain itself.
+
 That is the whole link: the login email must match the Email on the employee record. Technicians cannot see payroll, attendance, other employees, or jobs assigned to anyone else — enforced by the database, not the page. An admin who is also on the team list keeps full office access. Office accounts (emails not on the team list) are unaffected.
 
 ## 5. Deploy
