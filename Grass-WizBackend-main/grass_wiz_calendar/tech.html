@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Grass Wiz | Tech Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #d81b60;
+            --bg: #f2f7f4;
+            --panel: #ffffff;
+            --text: #004d40;
+            --text-muted: #6b7280;
+            --border: #d1d5db;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+
+        /* --- LOGIN SCREEN --- */
+        #loginScreen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; padding: 20px; text-align: center;
+        }
+        .brand-mark { width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 12px; display: grid; place-items: center; font-size: 24px; font-weight: 800; margin-bottom: 20px; }
+        #loginScreen h1 { margin-bottom: 10px; font-size: 24px; }
+        #loginScreen p { color: var(--text-muted); margin-bottom: 30px; }
+        .login-box { width: 100%; max-width: 300px; }
+        .login-box input { width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 16px; margin-bottom: 15px; outline: none; background: var(--panel); }
+        .login-box input:focus { border-color: var(--primary); }
+        .login-box button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 800; cursor: pointer; }
+        .login-box button:disabled { opacity: 0.6; }
+        .login-msg { margin-top: 15px; font-size: 13px; color: #b91c1c; min-height: 18px; }
+        .office-link { margin-top: 25px; font-size: 12px; color: var(--text-muted); }
+        .office-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
+
+        /* --- MAIN DASHBOARD --- */
+        #dashboard { display: none; flex-direction: column; height: 100vh; }
+        header { background: var(--panel); padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        header h2 { font-size: 18px; }
+        header p { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .logout-btn { background: none; border: none; color: #ef4444; font-weight: 800; cursor: pointer; font-size: 14px; }
+        .progress-pill { font-size: 12px; font-weight: 800; color: var(--primary); background: #fce4ec; padding: 4px 10px; border-radius: 20px; margin-top: 6px; display: inline-block; }
+
+        .job-list { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 15px; }
+
+        .job-card {
+            background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.1s;
+        }
+        .job-card:active { transform: scale(0.98); }
+        .job-card .time { color: var(--primary); font-weight: 800; font-size: 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .job-card h3 { font-size: 18px; margin-bottom: 5px; }
+        .job-card p { font-size: 14px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+        .job-card.done { opacity: 0.55; }
+        .job-card.done .time { color: #10b981; }
+        .kind-badge { font-size: 10px; font-weight: 800; background: #ede9fe; color: #6d28d9; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; }
+
+        /* --- JOB ORDER MODAL --- */
+        #jobModal {
+            position: fixed; inset: 0; background: var(--panel); z-index: 100;
+            transform: translateY(100%); transition: transform 0.3s ease-out;
+            display: flex; flex-direction: column;
+        }
+        #jobModal.open { transform: translateY(0); }
+
+        .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg); }
+        .modal-header h2 { font-size: 20px; }
+        .close-btn { background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; }
+
+        .modal-content { padding: 20px; overflow-y: auto; flex: 1; }
+        .info-group { margin-bottom: 20px; }
+        .info-group label { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 5px; }
+        .info-group p { font-size: 16px; font-weight: 600; line-height: 1.4; }
+
+        .action-buttons { display: flex; gap: 10px; margin: 20px 0; }
+        .action-buttons a { flex: 1; text-align: center; padding: 15px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-call { background: #e0f2fe; color: #0284c7; }
+        .btn-map { background: #d1fae5; color: #065f46; }
+
+        .notes-section { margin-top: 20px; padding-top: 20px; border-top: 2px dashed var(--border); }
+        .notes-section textarea { width: 100%; padding: 15px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; min-height: 100px; margin-bottom: 15px; font-family: inherit; resize: none; }
+
+        .btn-complete { width: 100%; padding: 18px; background: #10b981; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-complete:active { background: #059669; }
+        .btn-complete:disabled { opacity: 0.6; }
+
+        .done-banner { background: #d1fae5; color: #065f46; padding: 15px; border-radius: 8px; font-weight: 800; text-align: center; }
+
+        .empty-state { text-align: center; color: var(--text-muted); margin-top: 50px; }
+        .empty-state i { font-size: 40px; color: #10b981; margin-bottom: 10px; }
+
+        /* --- SIGNED-IN-BUT-NOT-A-TECH SCREEN --- */
+        #notechScreen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; text-align: center; }
+        #notechScreen p { color: var(--text-muted); margin: 15px 0 30px; max-width: 340px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOGIN SCREEN -->
+    <div id="loginScreen">
+        <div class="brand-mark">GW</div>
+        <h1>Tech Portal</h1>
+        <p>Sign in with your work account to see today's jobs.</p>
+        <form class="login-box" id="loginForm">
+            <input type="email" id="email" placeholder="Email" autocomplete="username" required>
+            <input type="password" id="password" placeholder="Password" autocomplete="current-password" required>
+            <button type="submit" id="loginBtn">Log In</button>
+        </form>
+        <div class="login-msg" id="loginMsg"></div>
+        <p class="office-link">Office staff? <a href="login.html">Open the main app</a></p>
+    </div>
+
+    <!-- 2. SIGNED IN BUT NOT A TECHNICIAN -->
+    <div id="notechScreen">
+        <div class="brand-mark">GW</div>
+        <h1>Not a technician account</h1>
+        <p><strong id="notechEmail"></strong> is signed in, but it is not linked to a technician record. Ask the office to put this email on the employee profile.</p>
+        <div class="login-box">
+            <button onclick="location.href='index.html'">Open the office app</button>
+            <button class="logout-btn" style="margin-top:15px;" onclick="portalLogout()">Log out</button>
+        </div>
+    </div>
+
+    <!-- 3. DASHBOARD (TODAY'S JOBS) -->
+    <div id="dashboard">
+        <header>
+            <div>
+                <h2 id="welcomeText">Today's Jobs</h2>
+                <p id="dateText"></p>
+                <span class="progress-pill" id="progressPill"></span>
+            </div>
+            <button class="logout-btn" onclick="portalLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </header>
+
+        <div class="job-list" id="jobList"></div>
+    </div>
+
+    <!-- 4. JOB ORDER MODAL -->
+    <div id="jobModal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Job Order</h2>
+            <button class="close-btn" onclick="closePortalModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/db.js"></script>
+<script src="js/tech-portal.js"></script>
+</body>
+</html>

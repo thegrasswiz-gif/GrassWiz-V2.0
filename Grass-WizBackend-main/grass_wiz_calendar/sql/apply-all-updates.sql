@@ -14,6 +14,8 @@
 --   4. Adds customers (found by phone number), the customer change log and
 --      site inspections (jobs.kind), and links existing jobs to customers
 --   5. Restricts attendance edits older than 7 days to admin accounts
+--   6. Tech portal: technician logins see only their own jobs and can only
+--      mark them complete; everything else is staff-only
 --
 -- Run it AFTER you have created at least one user under
 -- Authentication > Users, otherwise nobody can sign in to see the data.
@@ -206,7 +208,121 @@ CREATE POLICY "Admins delete attendance" ON attendance
   FOR DELETE TO authenticated USING (public.gw_is_admin());
 
 
--- 6) CHECK THE RESULT (shows in the results panel) ----------------------
+-- 6) TECH PORTAL: TECHNICIANS SEE ONLY THEIR OWN JOBS -------------------
+--    A tech login is a normal Auth user whose email matches the Email on their
+--    employee record. gw_my_tech_name() links that email to the technician's
+--    name (jobs.technician stores the name). Staff = admin or any account not
+--    on the team list — existing office logins keep full access unchanged.
+CREATE OR REPLACE FUNCTION public.gw_my_tech_name() RETURNS text
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT name FROM public.technicians
+  WHERE email IS NOT NULL AND lower(email) = lower(auth.jwt() ->> 'email')
+  LIMIT 1;
+$$;
+
+CREATE OR REPLACE FUNCTION public.gw_is_staff() RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT public.gw_is_admin() OR public.gw_my_tech_name() IS NULL;
+$$;
+
+-- The only write a technician gets: complete one of THEIR OWN open jobs
+CREATE OR REPLACE FUNCTION public.gw_complete_my_job(p_job_id text, p_remarks text)
+RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  UPDATE public.jobs
+  SET status = 'Completed', closing_remarks = nullif(trim(p_remarks), '')
+  WHERE id = p_job_id
+    AND technician = public.gw_my_tech_name()
+    AND status <> 'Cancelled';
+  RETURN FOUND;
+END;
+$$;
+
+DROP POLICY IF EXISTS "Authenticated access to jobs" ON jobs;
+DROP POLICY IF EXISTS "Staff read all jobs, techs read own" ON jobs;
+DROP POLICY IF EXISTS "Staff insert jobs" ON jobs;
+DROP POLICY IF EXISTS "Staff update jobs" ON jobs;
+DROP POLICY IF EXISTS "Staff delete jobs" ON jobs;
+
+CREATE POLICY "Staff read all jobs, techs read own" ON jobs
+  FOR SELECT TO authenticated
+  USING (public.gw_is_staff() OR technician = public.gw_my_tech_name());
+CREATE POLICY "Staff insert jobs" ON jobs
+  FOR INSERT TO authenticated WITH CHECK (public.gw_is_staff());
+CREATE POLICY "Staff update jobs" ON jobs
+  FOR UPDATE TO authenticated
+  USING (public.gw_is_staff()) WITH CHECK (public.gw_is_staff());
+CREATE POLICY "Staff delete jobs" ON jobs
+  FOR DELETE TO authenticated USING (public.gw_is_staff());
+
+-- Re-scope attendance to staff as well (techs see no attendance records)
+DROP POLICY IF EXISTS "Signed-in users read attendance" ON attendance;
+DROP POLICY IF EXISTS "Recent attendance insert" ON attendance;
+DROP POLICY IF EXISTS "Recent attendance update" ON attendance;
+DROP POLICY IF EXISTS "Admins delete attendance" ON attendance;
+DROP POLICY IF EXISTS "Staff read attendance" ON attendance;
+DROP POLICY IF EXISTS "Staff insert recent attendance" ON attendance;
+DROP POLICY IF EXISTS "Staff update recent attendance" ON attendance;
+
+CREATE POLICY "Staff read attendance" ON attendance
+  FOR SELECT TO authenticated USING (public.gw_is_staff());
+CREATE POLICY "Staff insert recent attendance" ON attendance
+  FOR INSERT TO authenticated
+  WITH CHECK (public.gw_is_admin()
+              OR (public.gw_my_tech_name() IS NULL
+                  AND date >= (now() AT TIME ZONE 'America/Jamaica')::date - 7));
+CREATE POLICY "Staff update recent attendance" ON attendance
+  FOR UPDATE TO authenticated
+  USING (public.gw_is_admin()
+         OR (public.gw_my_tech_name() IS NULL
+             AND date >= (now() AT TIME ZONE 'America/Jamaica')::date - 7))
+  WITH CHECK (public.gw_is_admin()
+              OR (public.gw_my_tech_name() IS NULL
+                  AND date >= (now() AT TIME ZONE 'America/Jamaica')::date - 7));
+CREATE POLICY "Admins delete attendance" ON attendance
+  FOR DELETE TO authenticated USING (public.gw_is_admin());
+
+-- Payroll, team records and customers: staff only
+DROP POLICY IF EXISTS "Authenticated access to technicians" ON technicians;
+DROP POLICY IF EXISTS "Authenticated access to payslips" ON payslips;
+DROP POLICY IF EXISTS "Authenticated access to customers" ON customers;
+DROP POLICY IF EXISTS "Authenticated access to customer_changes" ON customer_changes;
+DROP POLICY IF EXISTS "Staff access to technicians" ON technicians;
+DROP POLICY IF EXISTS "Staff access to payslips" ON payslips;
+DROP POLICY IF EXISTS "Staff access to customers" ON customers;
+DROP POLICY IF EXISTS "Staff access to customer_changes" ON customer_changes;
+
+CREATE POLICY "Staff access to technicians" ON technicians
+  FOR ALL TO authenticated USING (public.gw_is_staff()) WITH CHECK (public.gw_is_staff());
+CREATE POLICY "Staff access to payslips" ON payslips
+  FOR ALL TO authenticated USING (public.gw_is_staff()) WITH CHECK (public.gw_is_staff());
+CREATE POLICY "Staff access to customers" ON customers
+  FOR ALL TO authenticated USING (public.gw_is_staff()) WITH CHECK (public.gw_is_staff());
+CREATE POLICY "Staff access to customer_changes" ON customer_changes
+  FOR ALL TO authenticated USING (public.gw_is_staff()) WITH CHECK (public.gw_is_staff());
+
+-- Employee documents bucket: staff only
+DROP POLICY IF EXISTS "Authenticated read documents" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated upload documents" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated update documents" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated delete documents" ON storage.objects;
+DROP POLICY IF EXISTS "Staff read documents" ON storage.objects;
+DROP POLICY IF EXISTS "Staff upload documents" ON storage.objects;
+DROP POLICY IF EXISTS "Staff update documents" ON storage.objects;
+DROP POLICY IF EXISTS "Staff delete documents" ON storage.objects;
+
+CREATE POLICY "Staff read documents" ON storage.objects
+  FOR SELECT TO authenticated USING (bucket_id = 'documents' AND public.gw_is_staff());
+CREATE POLICY "Staff upload documents" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'documents' AND public.gw_is_staff());
+CREATE POLICY "Staff update documents" ON storage.objects
+  FOR UPDATE TO authenticated USING (bucket_id = 'documents' AND public.gw_is_staff());
+CREATE POLICY "Staff delete documents" ON storage.objects
+  FOR DELETE TO authenticated USING (bucket_id = 'documents' AND public.gw_is_staff());
+
+
+-- 7) CHECK THE RESULT (shows in the results panel) ----------------------
 SELECT 'tables'  AS area, tablename AS name, policyname AS detail
 FROM pg_policies WHERE schemaname = 'public' AND tablename IN ('jobs','technicians','attendance','payslips','customers','customer_changes')
 UNION ALL

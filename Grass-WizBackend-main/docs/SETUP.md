@@ -19,6 +19,7 @@ Do these once, in order. You need a free Supabase account and (to publish) a Net
 | `04-customers-inspections.sql` | Adds `customers`, the customer change log and site inspections (`jobs.kind`, `jobs.customer_id`), and turns your existing jobs into customer records | Needed for the phone-number lookup and Site Inspections |
 | `04-payslip-details.sql` | Adds `payslips.details`, the saved breakdown that lets history reprint a full payslip | Needed for full payslip reprints from history |
 | `05-attendance-admin-lock.sql` | Creates the `admins` table and restricts edits to attendance older than 7 days to admin accounts | Needed for the "Unlock Past" admin check |
+| `06-tech-portal.sql` | Links logins to technicians by email and scopes access: techs read only their own jobs and can only mark them complete | Needed for the Tech Portal (`tech.html`) |
 
 All of them can be re-run safely.
 
@@ -30,11 +31,19 @@ All of them can be re-run safely.
 3. **Authentication → Sign In / Providers → Email**: turn **off** "Allow new users to sign up". Otherwise anyone could register using the public key.
 4. **Authentication → URL Configuration**: set **Site URL** to your Netlify address and add `https://YOUR-SITE/reset-password.html` to **Redirect URLs** (needed for "Forgot password").
 
-## 4. Deploy
+## 4. Tech portal accounts (optional)
+The **Tech Portal** (`tech.html`, linked from the sign-in page) is a mobile page where field staff see only today's jobs assigned to them and mark them complete with closing remarks. To give a technician access:
+1. On their employee record (Team & Payroll → the employee), put their **work email** in the Email field.
+2. **Authentication → Users → Add user** with that same email and a password for them.
+3. Run `sql/06-tech-portal.sql` once if you have not already.
+
+That is the whole link: the login email must match the Email on the employee record. Technicians cannot see payroll, attendance, other employees, or jobs assigned to anyone else — enforced by the database, not the page. An admin who is also on the team list keeps full office access. Office accounts (emails not on the team list) are unaffected.
+
+## 5. Deploy
 **Drag and drop:** at [app.netlify.com/drop](https://app.netlify.com/drop), drop the whole `grass_wiz_calendar` folder.
 **From GitHub:** Add new site → Import project; Base directory and Publish directory both `grass_wiz_calendar`; no build command.
 
-## 5. Check it works
+## 6. Check it works
 Open the site → you land on the sign-in page → sign in → add a job, add an employee, upload a document. Press F12 and check the Console for red errors if something fails.
 
 ## Troubleshooting

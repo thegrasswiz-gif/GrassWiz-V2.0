@@ -14,6 +14,13 @@ async function getSession() {
 async function requireAuth() {
   const session = await getSession();
   if (!session) { location.replace(LOGIN_PAGE); return null; }
+  // Technicians get the portal, not the office app. Admins keep full access even
+  // when they are also on the team list. (No-op before sql/06-tech-portal.sql.)
+  try {
+    const [{ data: techName }, { data: isAdmin }] = await Promise.all([
+      sb.rpc('gw_my_tech_name'), sb.rpc('gw_is_admin')]);
+    if (techName && !isAdmin) { location.replace('tech.html'); return null; }
+  } catch (e) { /* older database without the portal functions: carry on */ }
   sb.auth.onAuthStateChange((event) => {
     if (event === 'SIGNED_OUT') location.replace(LOGIN_PAGE);
   });
