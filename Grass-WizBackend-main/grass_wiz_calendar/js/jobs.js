@@ -36,7 +36,7 @@ window.openJobModal = (j = null, date = selectedDate, kind = null) => {
   $('email').value = j ? j.email : '';
   $('address').value = j ? j.address : '';
   $('directions').value = j ? j.directions : '';
-  $('zone').value = j ? j.zone : '';
+  setParishValue($('zone'), j ? j.zone : '');
   $('technician').value = j ? j.technician : '';
   $('yardSize').value = j ? j.yardSize : '';
   $('jobDate').value = j ? j.date : date;
@@ -111,7 +111,7 @@ function fillFromCustomer(c) {
   $('email').value = c.email || '';
   $('address').value = c.address || '';
   $('directions').value = c.directions || '';
-  $('zone').value = c.zone || '';
+  setParishValue($('zone'), c.zone || '');
   if (c.yardSize) $('yardSize').value = c.yardSize;
   formCustomerId = c.id;
   showCustomerLookup(c);

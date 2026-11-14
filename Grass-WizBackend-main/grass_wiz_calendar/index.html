@@ -190,8 +190,7 @@
     
     <div class="field full">
         <label>Zone / Parish *</label>
-        <input id="zone" list="zoneList" required placeholder="e.g. St. Catherine" oninput="checkZoneSuggestion()">
-        <datalist id="zoneList"><option>St. Catherine</option><option>Kingston</option><option>St. Andrew</option><option>Clarendon</option><option>Manchester</option></datalist>
+        <select id="zone" required onchange="checkZoneSuggestion()"></select>
         <div id="zoneSuggestion" class="hidden" style="background:var(--primary-light); color:var(--primary); padding:8px; border-radius:6px; font-size:12px; margin-top:5px; cursor:pointer; border:1px solid var(--primary);"></div>
     </div>
     <div class="field"><label id="technicianLabel">Technician</label><select id="technician"><option value="">-- Assign Tech --</option></select></div>
@@ -290,7 +289,7 @@
     <div class="field full"><label>Email</label><input id="custEmail" type="email"></div>
     <div class="field full"><label>Address</label><input id="custAddress"></div>
     <div class="field full"><label>Directions</label><input id="custDirections"></div>
-    <div class="field full"><label>Zone / Parish</label><input id="custZone"></div>
+    <div class="field full"><label>Zone / Parish</label><select id="custZone"></select></div>
    </div>
    <p id="custMembership" style="margin:10px 0 0; font-weight:700;"></p>
    <p class="action-sub" id="custSummary" style="margin:10px 0 0;"></p>

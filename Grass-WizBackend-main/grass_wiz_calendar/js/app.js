@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('topTodayDate').textContent = "Today is: " + new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   initTheme();
+  initParishSelects();
   initApp();
   initCalendar();
   initJobs();

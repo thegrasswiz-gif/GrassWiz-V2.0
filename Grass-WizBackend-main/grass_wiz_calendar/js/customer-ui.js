@@ -27,7 +27,7 @@ window.openCustomerModal = (id) => {
   if (!c) return;
   $('custId').value = c.id;
   $('custPhone').value = c.phone; $('custName').value = c.name; $('custEmail').value = c.email;
-  $('custAddress').value = c.address; $('custDirections').value = c.directions; $('custZone').value = c.zone;
+  $('custAddress').value = c.address; $('custDirections').value = c.directions; setParishValue($('custZone'), c.zone);
   const mine = jobsOfCustomer(c);
   const nJobs = mine.filter(j => (j.kind || 'job') === 'job').length, nInsp = mine.length - nJobs;
   $('custMembership').textContent = membershipText(membershipForCustomer(c));

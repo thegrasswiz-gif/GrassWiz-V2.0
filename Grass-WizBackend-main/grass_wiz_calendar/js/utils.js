@@ -14,6 +14,35 @@ function esc(v) {
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// Jamaica's parishes — the Zone/Parish dropdowns
+const PARISHES = ['Clarendon','Hanover','Kingston','Manchester','Portland','Saint Andrew','Saint Ann','Saint Catherine','Saint Elizabeth','Saint James','Saint Mary','Saint Thomas','Trelawny','Westmoreland'];
+
+// Fill a Zone/Parish <select> with a prompt option plus the parish list
+function fillParishSelect(sel, prompt) {
+    sel.innerHTML = '';
+    sel.add(new Option(prompt, ''));
+    PARISHES.forEach(p => sel.add(new Option(p, p)));
+}
+
+// Set a parish select's value. Older records may hold a zone that isn't a
+// parish (typed before the dropdown existed); keep it selectable so opening
+// the record doesn't silently change it to the first parish
+function setParishValue(sel, val) {
+    val = val || '';
+    sel.querySelectorAll('option[data-legacy]').forEach(o => o.remove());
+    if (val && ![...sel.options].some(o => o.value === val)) {
+        const opt = new Option(val, val);
+        opt.dataset.legacy = '1';
+        sel.add(opt);
+    }
+    sel.value = val;
+}
+
+function initParishSelects() {
+    fillParishSelect($('zone'), 'Select a parish…');
+    fillParishSelect($('custZone'), 'No parish');
+}
+
 // Every second Saturday is a day off (alternating, anchored on 10 Oct 2026)
 function isOffSaturday(d) {
     if (d.getDay() !== 6) return false;
