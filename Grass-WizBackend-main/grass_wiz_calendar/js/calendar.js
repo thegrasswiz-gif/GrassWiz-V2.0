@@ -70,9 +70,11 @@ function renderCalendar() {
       cell.innerHTML = `<div class="daynum"><span>${d.getDate()}</span>${dayJobs.length ? `<span class="dotcount">${dayJobs.length}</span>` : offBadge}</div>`;
       
       dayJobs.slice(0,3).forEach(job => {
+        const done = job.status === 'Completed';
+        const missed = !done && job.date < todayISO(); // open work left behind by the calendar
         let chip = document.createElement('span');
-        chip.className = 'jobchip ' + (job.status === 'Pending' ? 'pending' : '') + (job.kind === 'inspection' ? ' inspection' : '');
-        chip.textContent = (job.kind === 'inspection' ? '🔍 ' : '') + (job.time ? job.time + ' ' : '') + job.customer;
+        chip.className = 'jobchip' + (done ? ' done' : '') + (missed ? ' missed' : '') + (job.status === 'Pending' ? ' pending' : '') + (job.kind === 'inspection' ? ' inspection' : '');
+        chip.textContent = (done ? '✓ ' : missed ? '✕ ' : '') + (job.kind === 'inspection' ? '🔍 ' : '') + (job.time ? job.time + ' ' : '') + job.customer;
         cell.appendChild(chip);
       });
       if(dayJobs.length > 3) { let more = document.createElement('div'); more.className = 'muted'; more.style.fontSize = '9px'; more.textContent = `+${dayJobs.length - 3} more`; cell.appendChild(more); }
@@ -158,8 +160,10 @@ function createJobCard(j, isUpcoming = false) {
   card.className = 'jobcard' + (insp ? ' inspection' : '');
   let dateDisplay = isUpcoming ? fmtDate(j.date) : [j.time, j.zone || 'No Zone'].filter(Boolean).join(' · ');
   
+  const missed = j.status !== 'Completed' && j.status !== 'Cancelled' && j.date < todayISO();
+  const statusText = missed ? 'Missed' : String(j.status || '');
   card.innerHTML = `
-    <div class="jobcardtop"><div><h4>${insp ? '<span class="badge-inspection">Inspection</span>' : tierBadgeHTML(membershipForJob(j))}${esc(j.customer)}</h4><span style="font-size:10px; color:var(--text-muted);">${esc(dateDisplay)}</span></div><span class="status ${esc(String(j.status || '').replaceAll(' ','-'))}">${esc(j.status)}</span></div>
+    <div class="jobcardtop"><div><h4>${insp ? '<span class="badge-inspection">Inspection</span>' : tierBadgeHTML(membershipForJob(j))}${esc(j.customer)}</h4><span style="font-size:10px; color:var(--text-muted);">${esc(dateDisplay)}</span></div><span class="status ${esc(statusText.replaceAll(' ','-'))}">${esc(statusText)}</span></div>
     <p><i class="fas fa-map-marker-alt"></i> ${esc(j.address)}</p>
     <p><i class="fas fa-hard-hat"></i> ${insp ? 'Inspector' : 'Tech'}: ${esc(j.technician) || 'Not assigned'}</p>
     <div class="cardbuttons">
