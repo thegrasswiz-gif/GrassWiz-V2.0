@@ -54,17 +54,22 @@ window.changeAttMonth = (offset) => {
   renderAttendanceCalendar();
 };
 
-window.unlockAttendance = () => {
+// Unlocking past attendance needs an admin account — the database enforces the
+// same rule (sql/05-attendance-admin-lock.sql), so this is only about the view
+window.unlockAttendance = async () => {
   if (isAttUnlocked) return;
-  let pwd = prompt("Enter Admin Password to unlock past attendance:");
-  if (pwd === "grasswiz") {
-      isAttUnlocked = true;
-      $('unlockAttBtn').innerHTML = '<i class="fas fa-unlock"></i> Unlocked';
-      $('unlockAttBtn').style.background = '#d1fae5';
-      $('unlockAttBtn').style.color = '#065f46';
-      renderAttendanceCalendar();
-  } else if (pwd !== null) {
-      alert("Incorrect password.");
+  try {
+    const { data: isAdmin, error } = await sb.rpc('gw_is_admin');
+    if (error) throw error;
+    if (!isAdmin) { alert('Only admin accounts can unlock past attendance.'); return; }
+    isAttUnlocked = true;
+    $('unlockAttBtn').innerHTML = '<i class="fas fa-unlock"></i> Unlocked';
+    $('unlockAttBtn').style.background = '#d1fae5';
+    $('unlockAttBtn').style.color = '#065f46';
+    renderAttendanceCalendar();
+  } catch (e) {
+    console.error(e);
+    alert('Could not check admin access. Please try again.');
   }
 };
 

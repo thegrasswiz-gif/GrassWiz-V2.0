@@ -13,6 +13,7 @@
 --      payslips.details (full breakdown so history can reprint a payslip)
 --   4. Adds customers (found by phone number), the customer change log and
 --      site inspections (jobs.kind), and links existing jobs to customers
+--   5. Restricts attendance edits older than 7 days to admin accounts
 --
 -- Run it AFTER you have created at least one user under
 -- Authentication > Users, otherwise nobody can sign in to see the data.
@@ -169,9 +170,47 @@ WHERE customer_id IS NULL
   );
 
 
--- 5) CHECK THE RESULT (shows in the results panel) ----------------------
+-- 5) ATTENDANCE: ONLY ADMINS EDIT RECORDS OLDER THAN 7 DAYS ------------
+--    admins table (emails only), gw_is_admin() helper, and per-action policies.
+CREATE TABLE IF NOT EXISTS admins (
+    email TEXT PRIMARY KEY
+);
+ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
+-- deliberately no policies on admins: it is only read through gw_is_admin()
+-- (SECURITY DEFINER), so the admin list is not visible in the app
+
+-- The admin accounts. Add more rows for other admins.
+INSERT INTO admins (email) VALUES ('thegrasswizz@gmail.com')
+ON CONFLICT (email) DO NOTHING;
+
+CREATE OR REPLACE FUNCTION public.gw_is_admin() RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.admins WHERE email = (auth.jwt() ->> 'email'));
+$$;
+
+DROP POLICY IF EXISTS "Authenticated access to attendance" ON attendance;
+
+CREATE POLICY "Signed-in users read attendance" ON attendance
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Recent attendance insert" ON attendance
+  FOR INSERT TO authenticated
+  WITH CHECK (public.gw_is_admin() OR date >= (now() AT TIME ZONE 'America/Jamaica')::date - 7);
+
+CREATE POLICY "Recent attendance update" ON attendance
+  FOR UPDATE TO authenticated
+  USING (public.gw_is_admin() OR date >= (now() AT TIME ZONE 'America/Jamaica')::date - 7)
+  WITH CHECK (public.gw_is_admin() OR date >= (now() AT TIME ZONE 'America/Jamaica')::date - 7);
+
+CREATE POLICY "Admins delete attendance" ON attendance
+  FOR DELETE TO authenticated USING (public.gw_is_admin());
+
+
+-- 6) CHECK THE RESULT (shows in the results panel) ----------------------
 SELECT 'tables'  AS area, tablename AS name, policyname AS detail
 FROM pg_policies WHERE schemaname = 'public' AND tablename IN ('jobs','technicians','attendance','payslips','customers','customer_changes')
+UNION ALL
+SELECT 'admins', 'admin accounts', count(*)::text FROM admins
 UNION ALL
 SELECT 'storage', 'documents bucket is public = ' || public::text, ''
 FROM storage.buckets WHERE id = 'documents'

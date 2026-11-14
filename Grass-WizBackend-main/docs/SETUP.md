@@ -17,6 +17,8 @@ Do these once, in order. You need a free Supabase account and (to publish) a Net
 | `02-auth-policies.sql` | Replaces any old "allow everyone" rules with signed-in-only rules and makes the `documents` storage bucket private | Existing project that was set up before the login existed (harmless to run on a new one) |
 | `03-payslip-gross.sql` | Adds the `gross_pay` column used for year-to-date gross | Existing project created before this column existed |
 | `04-customers-inspections.sql` | Adds `customers`, the customer change log and site inspections (`jobs.kind`, `jobs.customer_id`), and turns your existing jobs into customer records | Needed for the phone-number lookup and Site Inspections |
+| `04-payslip-details.sql` | Adds `payslips.details`, the saved breakdown that lets history reprint a full payslip | Needed for full payslip reprints from history |
+| `05-attendance-admin-lock.sql` | Creates the `admins` table and restricts edits to attendance older than 7 days to admin accounts | Needed for the "Unlock Past" admin check |
 
 All of them can be re-run safely.
 
@@ -45,7 +47,7 @@ Open the site → you land on the sign-in page → sign in → add a job, add an
 
 ## Good to know
 - Every signed-in user can see everything, including Team & Payroll. Per-role access (for example, admins only) would be a future change.
-- The code inside the app that unlocks past attendance uses a fixed password stored in `js/attendance.js`. Treat it as a speed bump, not security, and change it if staff should not know it.
+- Only admin accounts can change attendance older than 7 days ("Unlock Past"). The list of admins lives in the `admins` table — add or remove rows in the SQL Editor or Table Editor (the table is not readable from the app by design). Enforced by the database (`sql/05-attendance-admin-lock.sql`), not just the page.
 
 ## Customers and inspections (what the upgrade does)
 - Run `sql/apply-all-updates.sql` **before** deploying this version. Until then the app still saves ordinary jobs (without the customer link), but Site Inspections will say the database needs the upgrade.
