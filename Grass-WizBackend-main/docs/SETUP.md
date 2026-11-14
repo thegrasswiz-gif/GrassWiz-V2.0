@@ -41,6 +41,8 @@ The **Tech Portal** (`tech.html`, linked from the sign-in page) is a mobile page
 
 That is the whole link: the login email must match the Email on the employee record. Technicians cannot see payroll, attendance, other employees, or jobs assigned to anyone else — enforced by the database, not the page. An admin who is also on the team list keeps full office access. Office accounts (emails not on the team list) are unaffected.
 
+**Install as an app:** `tech.html` is a PWA. Android: open the portal in Chrome → ⋮ menu → **Add to Home screen / Install app**. iPhone: Safari → Share → **Add to Home Screen**. It then opens full-screen with its own icon, and the login page still loads on a dead connection (jobs need signal to fetch). The service worker (`sw.js`) only caches portal files — the office app is untouched.
+
 ## 5. Deploy
 **Drag and drop:** at [app.netlify.com/drop](https://app.netlify.com/drop), drop the whole `grass_wiz_calendar` folder.
 **From GitHub:** Add new site → Import project; Base directory and Publish directory both `grass_wiz_calendar`; no build command.

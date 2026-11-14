@@ -188,3 +188,8 @@ window.completePortalJob = async () => {
         btn.disabled = false;
     }
 };
+
+// PWA: service worker makes the portal installable and opens offline
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+}
