@@ -12,11 +12,27 @@ function getCompletedInMonth(year, month) {
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
-// Jobs from today onward that are still to be done
-function getUpcomingJobs() {
-  return jobs
-    .filter(j => isJob(j) && j.date >= todayISO() && isOpenJob(j))
+// Jobs from today onward that are still to be done. Optional range narrows
+// it: 'week' = rest of this week (through Saturday), 'month' = the month the
+// calendar is viewing (viewedMonth defaults to the current month), 'all' =
+// the whole pipeline. Past viewed months return nothing — everything there
+// is behind today already.
+function getUpcomingJobs(range = 'all', viewedMonth) {
+  const open = jobs.filter(j => isJob(j) && j.date >= todayISO() && isOpenJob(j));
+  const sorted = arr => arr
     .sort((a, b) => a.date !== b.date ? a.date.localeCompare(b.date) : (a.time || '').localeCompare(b.time || ''));
+  if (range === 'week') {
+    const end = parseDateSafe(todayISO());
+    end.setDate(end.getDate() + (6 - end.getDay()));
+    return sorted(open.filter(j => j.date <= toISODate(end)));
+  }
+  if (range === 'month') {
+    const m = viewedMonth || parseDateSafe(todayISO());
+    const start = toISODate(new Date(m.getFullYear(), m.getMonth(), 1));
+    const end = toISODate(new Date(m.getFullYear(), m.getMonth() + 1, 0));
+    return sorted(open.filter(j => j.date >= start && j.date <= end));
+  }
+  return sorted(open);
 }
 
 // Jobs that carry a repeat schedule (the original of each series)
@@ -71,6 +87,7 @@ function renderCustomerFilter() {
 // ---- The view ----
 let actionMode = null;      // 'completed' | 'upcoming' | 'recurring' | 'due'
 let actionMonth = null;     // first day of the month shown by the Completed list
+let upcomingRange = 'month'; // range shown by the Upcoming list: 'week' | 'month' | 'all'
 
 const REPEAT_LABELS = {
   weekly: 'Every week', biweekly: 'Every 2 weeks', monthly: 'Monthly (same date)',
@@ -93,10 +110,15 @@ function refreshActionList() {
   if (actionMode && $('viewActionList').classList.contains('active')) renderActionList();
 }
 
+window.setUpcomingRange = v => { upcomingRange = v; renderActionList(); };
+
 function renderActionList() {
   const grid = $('actionGrid');
   grid.innerHTML = '';
   $('actionMonthNav').classList.toggle('hidden', actionMode !== 'completed');
+  const rangeSel = $('upcomingRangeSel');
+  rangeSel.classList.toggle('hidden', actionMode !== 'upcoming');
+  rangeSel.value = upcomingRange;
 
   let list = [], title = '', subtitle = '', empty = '';
   if (actionMode === 'completed') {
@@ -107,10 +129,12 @@ function renderActionList() {
     subtitle = `${list.length} completed in ${monthName}`;
     empty = `No completed jobs in ${monthName}.`;
   } else if (actionMode === 'upcoming') {
-    list = getUpcomingJobs();
+    list = getUpcomingJobs(upcomingRange, viewDate);
     title = 'Upcoming Jobs';
-    subtitle = `${list.length} still to do, from today onward`;
-    empty = 'No upcoming jobs.';
+    const monthName = viewDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    const when = { week: 'this week', month: `in ${monthName}`, all: 'from today onward' }[upcomingRange];
+    subtitle = `${list.length} still to do, ${when}`;
+    empty = { week: 'No more jobs this week.', month: `No jobs in ${monthName}.`, all: 'No upcoming jobs.' }[upcomingRange];
   } else if (actionMode === 'recurring') {
     list = getRecurringJobs();
     title = 'Recurring Jobs';

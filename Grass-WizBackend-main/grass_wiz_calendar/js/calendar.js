@@ -107,7 +107,7 @@ function updateSidebar() {
   const shownJobs = visibleJobs();
   // The numbers on the stat boxes use the same selectors as the lists they open (js/actions.js)
   const jobsThisMonth = getCompletedInMonth(viewDate.getFullYear(), viewDate.getMonth()).length;
-  const upcomingCount = getUpcomingJobs().length;
+  const upcomingCount = getUpcomingJobs('month', viewDate).length;
   const recurringCount = getRecurringJobs().length;
   const dueCount = getDueJobs().length;
 
@@ -117,6 +117,8 @@ function updateSidebar() {
   const isThisMonth = viewDate.getFullYear() === now.getFullYear() && viewDate.getMonth() === now.getMonth();
   $('statMonthLabel').textContent = isThisMonth ? 'Jobs Completed This Month'
     : 'Jobs Completed in ' + viewDate.toLocaleDateString(undefined, { month: 'long', year: viewDate.getFullYear() === now.getFullYear() ? undefined : 'numeric' });
+  $('statUpcomingLabel').textContent = isThisMonth ? 'Upcoming Jobs This Month'
+    : 'Upcoming in ' + viewDate.toLocaleDateString(undefined, { month: 'long', year: viewDate.getFullYear() === now.getFullYear() ? undefined : 'numeric' });
   $('statUpcoming').textContent = upcomingCount;
   $('statRecurring').textContent = recurringCount;
   $('statDue').textContent = dueCount;
@@ -135,7 +137,10 @@ function updateSidebar() {
   }
 
   const upcomingList = $('upcomingList'); upcomingList.innerHTML = '';
-  let upcomingJobs = shownJobs.filter(j => j.date >= todayISO() && j.status !== 'Cancelled' && j.status !== 'Completed')
+  // Same window as the stat box: open jobs inside the month the calendar is viewing
+  const upStart = toISODate(new Date(viewDate.getFullYear(), viewDate.getMonth(), 1));
+  const upEnd = toISODate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0));
+  let upcomingJobs = shownJobs.filter(j => j.date >= todayISO() && j.date >= upStart && j.date <= upEnd && j.status !== 'Cancelled' && j.status !== 'Completed')
     .sort((a, b) => { if (a.date !== b.date) return a.date.localeCompare(b.date); return (a.time || '').localeCompare(b.time || ''); });
 
   if(!upcomingJobs.length) {

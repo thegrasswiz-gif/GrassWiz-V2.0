@@ -73,7 +73,7 @@
 
     <section class="stats">
       <div class="stat clickable" data-stat="completed" role="button" tabindex="0" title="See the completed jobs"><i class="fas fa-calendar-check"></i><span id="statMonthLabel">Jobs Completed This Month</span><strong id="statMonth">0</strong></div>
-      <div class="stat clickable" data-stat="upcoming" role="button" tabindex="0" title="See the upcoming jobs"><i class="fas fa-clock"></i><span>Upcoming jobs</span><strong id="statUpcoming">0</strong></div>
+      <div class="stat clickable" data-stat="upcoming" role="button" tabindex="0" title="See the upcoming jobs"><i class="fas fa-clock"></i><span id="statUpcomingLabel">Upcoming jobs</span><strong id="statUpcoming">0</strong></div>
       <div class="stat clickable" data-stat="recurring" role="button" tabindex="0" title="See the recurring jobs"><i class="fas fa-sync-alt"></i><span>Recurring Jobs</span><strong id="statRecurring">0</strong></div>
       <div class="stat clickable" data-stat="due" role="button" tabindex="0" title="Customers with nothing booked whose last job was 20+ days ago"><i class="fas fa-exclamation-triangle"></i><span>Due for Next Service</span><strong id="statDue">0</strong></div>
     </section>
@@ -119,6 +119,11 @@
         <button class="secondary" id="actionJumpBtn"><i class="fas fa-calendar-day"></i> Jump to Month</button>
         <input type="month" id="actionMonthPicker" class="month-picker" aria-label="Jump to month" tabindex="-1">
       </div>
+      <select id="upcomingRangeSel" class="customer-filter hidden" onchange="setUpcomingRange(this.value)" title="How far ahead to show">
+        <option value="week">This week</option>
+        <option value="month" selected>This month</option>
+        <option value="all">All upcoming</option>
+      </select>
     </div>
     <section class="panel action-panel"><div class="action-grid" id="actionGrid"></div></section>
   </div>
