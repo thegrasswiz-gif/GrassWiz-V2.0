@@ -9,7 +9,8 @@
 --   1. Only signed-in users can read or change jobs, employees,
 --      attendance and payslips (removes the old "allow everyone" rules)
 --   2. Makes the 'documents' bucket private, signed-in users only
---   3. Adds payslips.gross_pay (used for year-to-date gross)
+--   3. Adds payslips.gross_pay (used for year-to-date gross) and
+--      payslips.details (full breakdown so history can reprint a payslip)
 --   4. Adds customers (found by phone number), the customer change log and
 --      site inspections (jobs.kind), and links existing jobs to customers
 --
@@ -66,10 +67,13 @@ CREATE POLICY "Authenticated update documents" ON storage.objects FOR UPDATE TO 
 CREATE POLICY "Authenticated delete documents" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'documents');
 
 
--- 3) PAYSLIPS: GROSS PAY COLUMN -----------------------------------------
+-- 3) PAYSLIPS: GROSS PAY + BREAKDOWN COLUMNS ----------------------------
 -- gross_pay = basic pay + bonus, before deductions. Older payslips stay NULL
 -- and the app uses their net pay when adding up year-to-date.
+-- details = JSON snapshot of the payslip at generation time, so the history
+-- view can reprint the full slip instead of a summary.
 ALTER TABLE payslips ADD COLUMN IF NOT EXISTS gross_pay DECIMAL(10,2);
+ALTER TABLE payslips ADD COLUMN IF NOT EXISTS details JSONB;
 
 
 -- 4) CUSTOMERS + SITE INSPECTIONS ---------------------------------------
@@ -174,6 +178,9 @@ FROM storage.buckets WHERE id = 'documents'
 UNION ALL
 SELECT 'payslips', 'gross_pay column', data_type
 FROM information_schema.columns WHERE table_name = 'payslips' AND column_name = 'gross_pay'
+UNION ALL
+SELECT 'payslips', 'details column', data_type
+FROM information_schema.columns WHERE table_name = 'payslips' AND column_name = 'details'
 UNION ALL
 SELECT 'customers', 'customers created', count(*)::text FROM customers
 UNION ALL

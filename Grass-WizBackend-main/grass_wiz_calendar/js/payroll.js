@@ -1,26 +1,90 @@
 // Payslip calculation, preview, generation and history
 
+// Shared look for the printed payslip, used by the live payslip and history reprints
+const PAYSLIP_CSS = 'body { font-family: Arial, sans-serif; padding: 20px; color: #000; } .payslip-doc { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 20px; } .payslip-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; } .payslip-header h1 { margin: 0; font-size: 24px; text-transform: uppercase; } .payslip-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; } .meta-row { display: flex; justify-content: space-between; } .payslip-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px; } .payslip-table th { text-align: left; border-bottom: 1px solid #000; padding: 8px 4px; } .payslip-table td { padding: 8px 4px; border-bottom: 1px solid #eee; } .payslip-table .amount { text-align: right; } .payslip-totals { display: flex; justify-content: flex-end; font-size: 14px; font-weight: bold; border-top: 2px solid #000; padding-top: 10px; } .net-pay-box { background: #f0f0f0; padding: 10px; margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; border: 1px solid #000; }';
+
+// The full printed payslip. d = { name, department, nis, trn, periodEnd,
+// periodNum, basicPay, bonus, tax, advance, absences, netPay, ytd, ytdLabel, subtitle }
+function payslipDocHTML(d) {
+  var html = '<div class="payslip-doc"><div class="payslip-header"><h1>THE GRASS WIZ</h1>';
+  if (d.subtitle) html += '<p>' + esc(d.subtitle) + '</p>';
+  html += '</div>';
+  html += '<div class="payslip-meta"><div>';
+  html += '<div class="meta-row"><strong>Employee:</strong> <span>' + esc(d.name) + '</span></div>';
+  html += '<div class="meta-row"><strong>Department:</strong> <span>' + esc(d.department || 'Landscape') + '</span></div>';
+  html += '<div class="meta-row"><strong>NIS:</strong> <span>' + esc(d.nis) + '</span></div>';
+  html += '</div><div>';
+  html += '<div class="meta-row"><strong>Per. End:</strong> <span>' + fmtDate(d.periodEnd) + '</span></div>';
+  html += '<div class="meta-row"><strong>Per. No:</strong> <span>' + d.periodNum + '</span></div>';
+  html += '<div class="meta-row"><strong>TRN:</strong> <span>' + esc(d.trn) + '</span></div>';
+  html += '</div></div>';
+
+  html += '<table class="payslip-table"><thead><tr><th>Earnings</th><th class="amount">AMOUNT</th><th>Deductions</th><th class="amount">AMOUNT</th></tr></thead><tbody>';
+  html += '<tr><td>Basic Pay</td><td class="amount">$' + d.basicPay.toLocaleString(undefined, {minimumFractionDigits:2}) + '</td><td>Salary Advance</td><td class="amount">$' + d.advance.toLocaleString(undefined, {minimumFractionDigits:2}) + '</td></tr>';
+
+  if (d.absences > 0) {
+      html += '<tr><td></td><td class="amount"></td><td>Absent ' + d.absences + ' Days</td><td class="amount">$0.00</td></tr>';
+  }
+  if (d.bonus > 0) {
+      html += '<tr><td>Bonus</td><td class="amount">$' + d.bonus.toLocaleString(undefined, {minimumFractionDigits:2}) + '</td><td></td><td></td></tr>';
+  }
+  if (d.tax > 0) {
+      html += '<tr><td></td><td class="amount"></td><td>Tax</td><td class="amount">$' + d.tax.toLocaleString(undefined, {minimumFractionDigits:2}) + '</td></tr>';
+  }
+
+  html += '</tbody></table>';
+  html += '<div class="payslip-totals"><div style="margin-right: 20px;">TOTALS: $' + (d.basicPay + d.bonus).toLocaleString(undefined, {minimumFractionDigits:2}) + '</div>';
+  html += '<div>DEDUCTIONS: $' + (d.tax + d.advance).toLocaleString(undefined, {minimumFractionDigits:2}) + '</div></div>';
+  html += '<div class="net-pay-box">NET PAY: $' + d.netPay.toLocaleString(undefined, {minimumFractionDigits:2}) + '</div>';
+  html += '<div style="margin-top:20px; font-size:12px;"><strong>' + esc(d.ytdLabel || 'Year-to-Date Gross:') + '</strong> $' + d.ytd.toLocaleString(undefined, {minimumFractionDigits:2}) + '</div></div>';
+  return html;
+}
 
 window.viewHistoricalPayslip = (slipId) => {
   let slip = techPayslips.find(s => s.id === slipId);
   if(!slip) return;
-  
+
   var html = '<html><head><title>Payslip History - ' + esc(activeEmployee.name) + '</title>';
-  html += '<style>body { font-family: Arial, sans-serif; padding: 20px; color: #000; } .payslip-doc { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 20px; } .payslip-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; } .payslip-header h1 { margin: 0; font-size: 24px; text-transform: uppercase; } .payslip-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; } .meta-row { display: flex; justify-content: space-between; } .net-pay-box { background: #f0f0f0; padding: 10px; margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; border: 1px solid #000; }</style></head><body>';
-  
-  html += '<div class="payslip-doc"><div class="payslip-header"><h1>THE GRASS WIZ</h1><p>Historical Record</p></div>';
-  html += '<div class="payslip-meta"><div>';
-  html += '<div class="meta-row"><strong>Employee:</strong> <span>' + esc(activeEmployee.name) + '</span></div>';
-  html += '<div class="meta-row"><strong>Department:</strong> <span>' + esc(activeEmployee.department || 'Landscape') + '</span></div>';
-  html += '</div><div>';
-  html += '<div class="meta-row"><strong>Per. End:</strong> <span>' + fmtDate(slip.period_end) + '</span></div>';
-  html += '<div class="meta-row"><strong>Per. No:</strong> <span>' + slip.period_num + '</span></div>';
-  html += '</div></div>';
-  
-  html += '<div class="net-pay-box">NET PAY: $' + Number(slip.net_pay).toLocaleString(undefined, {minimumFractionDigits:2}) + '</div>';
-  html += '<div style="margin-top:20px; font-size:12px;"><strong>Year-to-Date Gross at time of payment:</strong> $' + Number(slip.ytd_gross).toLocaleString(undefined, {minimumFractionDigits:2}) + '</div></div>';
+  html += '<style>' + PAYSLIP_CSS + '</style></head><body>';
+
+  if (slip.details) {
+    // Payslips saved after the details column was added carry the full
+    // breakdown, so they reprint exactly like the original
+    const d = slip.details;
+    html += payslipDocHTML({
+      name: d.name || activeEmployee.name,
+      department: d.department,
+      nis: d.nis,
+      trn: d.trn,
+      periodEnd: slip.period_end,
+      periodNum: slip.period_num,
+      basicPay: Number(d.basic_pay || 0),
+      bonus: Number(d.bonus || 0),
+      tax: Number(d.tax || 0),
+      advance: Number(d.advance || 0),
+      absences: Number(d.absences || 0),
+      netPay: Number(slip.net_pay),
+      ytd: Number(slip.ytd_gross),
+      ytdLabel: 'Year-to-Date Gross at time of payment:',
+      subtitle: 'Historical Record'
+    });
+  } else {
+    // Older payslips only saved the summary figures
+    html += '<div class="payslip-doc"><div class="payslip-header"><h1>THE GRASS WIZ</h1><p>Historical Record</p></div>';
+    html += '<div class="payslip-meta"><div>';
+    html += '<div class="meta-row"><strong>Employee:</strong> <span>' + esc(activeEmployee.name) + '</span></div>';
+    html += '<div class="meta-row"><strong>Department:</strong> <span>' + esc(activeEmployee.department || 'Landscape') + '</span></div>';
+    html += '</div><div>';
+    html += '<div class="meta-row"><strong>Per. End:</strong> <span>' + fmtDate(slip.period_end) + '</span></div>';
+    html += '<div class="meta-row"><strong>Per. No:</strong> <span>' + slip.period_num + '</span></div>';
+    html += '</div></div>';
+
+    html += '<div class="net-pay-box">NET PAY: $' + Number(slip.net_pay).toLocaleString(undefined, {minimumFractionDigits:2}) + '</div>';
+    html += '<div style="margin-top:20px; font-size:12px;"><strong>Year-to-Date Gross at time of payment:</strong> $' + Number(slip.ytd_gross).toLocaleString(undefined, {minimumFractionDigits:2}) + '</div></div>';
+  }
+
   html += '</body></html>';
-  
+
   openPrintWindow(html);
 };
 
@@ -81,46 +145,28 @@ function generatePayslipHTML(isPreview = false) {
   // Pay periods run 26th-25th, one per month: the period ending in January is No. 1 ... December is No. 12
   let periodNum = currentPayPeriod.end.getMonth() + 1;
 
+  // Snapshot of everything on the printed slip: the history view must be able to
+  // reproduce this exact payslip even if the employee record or attendance changes later
+  const details = {
+    name: activeEmployee.name,
+    department: activeEmployee.department || 'Landscape',
+    nis: activeEmployee.nis,
+    trn: activeEmployee.trn,
+    basic_pay: gross,
+    bonus, tax, advance, absences,
+    days_worked: weekdaysWorked + satsWorked
+  };
+
   var html = '<html><head><title>Payslip - ' + esc(activeEmployee.name) + '</title>';
-  html += '<style>body { font-family: Arial, sans-serif; padding: 20px; color: #000; } .payslip-doc { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 20px; } .payslip-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; } .payslip-header h1 { margin: 0; font-size: 24px; text-transform: uppercase; } .payslip-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; } .meta-row { display: flex; justify-content: space-between; } .payslip-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px; } .payslip-table th { text-align: left; border-bottom: 1px solid #000; padding: 8px 4px; } .payslip-table td { padding: 8px 4px; border-bottom: 1px solid #eee; } .payslip-table .amount { text-align: right; } .payslip-totals { display: flex; justify-content: flex-end; font-size: 14px; font-weight: bold; border-top: 2px solid #000; padding-top: 10px; } .net-pay-box { background: #f0f0f0; padding: 10px; margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; border: 1px solid #000; }</style></head><body>';
-  
-  html += '<div class="payslip-doc"><div class="payslip-header"><h1>THE GRASS WIZ</h1></div>';
-  html += '<div class="payslip-meta"><div>';
-  html += '<div class="meta-row"><strong>Employee:</strong> <span>' + esc(activeEmployee.name) + '</span></div>';
-  html += '<div class="meta-row"><strong>Department:</strong> <span>' + esc(activeEmployee.department || 'Landscape') + '</span></div>';
-  html += '<div class="meta-row"><strong>NIS:</strong> <span>' + esc(activeEmployee.nis) + '</span></div>';
-  html += '</div><div>';
-  html += '<div class="meta-row"><strong>Per. End:</strong> <span>' + fmtDate(periodEnd) + '</span></div>';
-  html += '<div class="meta-row"><strong>Per. No:</strong> <span>' + periodNum + '</span></div>';
-  html += '<div class="meta-row"><strong>TRN:</strong> <span>' + esc(activeEmployee.trn) + '</span></div>';
-  html += '</div></div>';
-  
-  html += '<table class="payslip-table"><thead><tr><th>Earnings</th><th class="amount">AMOUNT</th><th>Deductions</th><th class="amount">AMOUNT</th></tr></thead><tbody>';
-  
-  html += '<tr><td>Basic Pay</td><td class="amount">$' + gross.toLocaleString(undefined, {minimumFractionDigits:2}) + '</td><td>Salary Advance</td><td class="amount">$' + advance.toLocaleString(undefined, {minimumFractionDigits:2}) + '</td></tr>';
-  
-  if (absences > 0) {
-      html += '<tr><td></td><td class="amount"></td><td>Absent ' + absences + ' Days</td><td class="amount">$0.00</td></tr>';
-  }
-  if (bonus > 0) { 
-      html += '<tr><td>Bonus</td><td class="amount">$' + bonus.toLocaleString(undefined, {minimumFractionDigits:2}) + '</td><td></td><td></td></tr>'; 
-  }
-  if (tax > 0) { 
-      html += '<tr><td></td><td class="amount"></td><td>Tax</td><td class="amount">$' + tax.toLocaleString(undefined, {minimumFractionDigits:2}) + '</td></tr>'; 
-  }
-  
-  html += '</tbody></table>';
-  html += '<div class="payslip-totals"><div style="margin-right: 20px;">TOTALS: $' + (gross + bonus).toLocaleString(undefined, {minimumFractionDigits:2}) + '</div>';
-  html += '<div>DEDUCTIONS: $' + (tax + advance).toLocaleString(undefined, {minimumFractionDigits:2}) + '</div></div>';
-  html += '<div class="net-pay-box">NET PAY: $' + netPay.toLocaleString(undefined, {minimumFractionDigits:2}) + '</div>';
-  html += '<div style="margin-top:20px; font-size:12px;"><strong>Year-to-Date Gross:</strong> $' + newYtd.toLocaleString(undefined, {minimumFractionDigits:2}) + '</div></div>';
-  
+  html += '<style>' + PAYSLIP_CSS + '</style></head><body>';
+  html += payslipDocHTML({ ...details, periodEnd, periodNum, basicPay: gross, netPay, ytd: newYtd });
+
   if(!isPreview) {
       html += '<script>window.onload = function() { window.print(); }<\/script>';
   }
   html += '</body></html>';
-  
-  return { html, netPay, totalEarnings, newYtd, periodEnd, periodNum };
+
+  return { html, netPay, totalEarnings, newYtd, periodEnd, periodNum, details };
 }
 
 // Event wiring — called once from app.js after the user is signed in.
@@ -184,7 +230,7 @@ function initPayroll() {
 
     let slipId = makeId();
     try {
-      await sbSavePayslip({ id: slipId, tech_id: activeEmployee.id, period_end: result.periodEnd, period_num: result.periodNum, gross_pay: result.totalEarnings, net_pay: result.netPay, ytd_gross: result.newYtd });
+      await sbSavePayslip({ id: slipId, tech_id: activeEmployee.id, period_end: result.periodEnd, period_num: result.periodNum, gross_pay: result.totalEarnings, net_pay: result.netPay, ytd_gross: result.newYtd, details: result.details });
     } catch (e) {
       console.error("Could not save payslip", e);
       alert('The payslip could NOT be saved to the system. It will still open so you can print it, but it will not appear in the history.');

@@ -260,11 +260,15 @@ async function sbFetchPayslips(techId) {
 
 async function sbSavePayslip(payslipData) {
   let { error } = await sb.from('payslips').insert(payslipData);
-  // Database not yet upgraded with sql/03-payslip-gross.sql: save without the new column rather than fail
-  if (error && /gross_pay/i.test(error.message || '')) {
-    console.warn('payslips.gross_pay column missing - run sql/03-payslip-gross.sql');
-    const { gross_pay, ...legacyData } = payslipData;
-    ({ error } = await sb.from('payslips').insert(legacyData));
+  // Database not yet upgraded with the sql updates: save without the new columns rather than fail
+  for (const col of ['details', 'gross_pay']) {
+    if (!error) break;
+    if (new RegExp(col, 'i').test(error.message || '')) {
+      console.warn('payslips.' + col + ' column missing - run the updates in sql/');
+      const { [col]: dropped, ...rest } = payslipData;
+      payslipData = rest;
+      ({ error } = await sb.from('payslips').insert(payslipData));
+    }
   }
   if (error) throw error;
 }
