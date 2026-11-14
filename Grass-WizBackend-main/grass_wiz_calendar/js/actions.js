@@ -159,12 +159,19 @@ function createCompletedCard(j, mode) {
 }
 
 // Scheduled job: the normal card (Edit / Reschedule / Complete / Cancel / Delete), plus the repeat pattern
+// and a Cancel Series button that ends the whole schedule
 function createScheduledCard(j, mode) {
   const card = createJobCard(j, true);
   if (mode === 'recurring') {
     const info = document.createElement('p');
     info.innerHTML = `<i class="fas fa-sync-alt"></i> ${esc(REPEAT_LABELS[j.repeat] || j.repeat)}${j.repeatUntil ? ' until ' + esc(fmtDate(j.repeatUntil)) : ''}`;
     card.insertBefore(info, card.querySelector('.cardbuttons'));
+    const btn = document.createElement('button');
+    btn.className = 'small danger';
+    btn.style.cssText = 'width:100%; justify-content:center; margin-top:8px;';
+    btn.innerHTML = '<i class="fas fa-ban"></i> Cancel Series';
+    btn.onclick = () => cancelJobSeries(j.id);
+    card.appendChild(btn);
   }
   return card;
 }

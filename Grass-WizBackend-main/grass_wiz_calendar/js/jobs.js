@@ -140,12 +140,35 @@ window.openBookAgain = (src) => {
   }, '', 'job');
 };
 
-// Make Recurring on an already-completed job: the same "Is this a recurring job?" popup used when completing
-window.startMakeRecurring = (jobId) => {
-  completingJobId = jobId;
+// A customer "in the recurring list" has a job still carrying the repeat tag (the series original)
+function customerHasRecurring(job) {
+  const key = customerKey(job);
+  return jobs.some(o => isJob(o) && o.repeat && o.repeat !== 'none' && o.status !== 'Cancelled' && customerKey(o) === key);
+}
+
+// The popup after completing a job (or "Make Recurring" on the Completed list).
+// Customers already on a repeat schedule get Keep/Cancel Recurring instead of Yes/No,
+// so nobody can accidentally start a second overlapping series for them.
+function openRecurringPrompt(job) {
+  if (!job) return;
+  const already = customerHasRecurring(job);
+  $('recurringModalTitle').textContent = already ? 'This customer is already recurring' : 'Is this a recurring job?';
+  $('recurringModalText').textContent = already
+    ? 'Keep the schedule running, or cancel it along with their upcoming visits.'
+    : 'If yes, we will automatically schedule the next job.';
+  $('recurringNewSection').classList.toggle('hidden', already);
+  $('recurringExistingSection').classList.toggle('hidden', !already);
   $('nextRecurringSection').classList.add('hidden');
   $('nextRecurringUntil').value = todayISO();
   $('recurringModalBack').classList.add('open');
+}
+
+// Make Recurring on an already-completed job: the same popup used when completing
+window.startMakeRecurring = (jobId) => {
+  let job = jobs.find(j => j.id === jobId);
+  if(!job) return;
+  completingJobId = jobId;
+  openRecurringPrompt(job);
 };
 
 window.confirmPrint = () => {
@@ -173,15 +196,17 @@ window.submitCompleteJob = () => {
     sbSaveJob(job, true).catch(e => { console.error(e); alert('Error completing the inspection.'); }).finally(() => { completingJobId = null; fetchJobs(); });
     return;
   }
-  $('recurringModalBack').classList.add('open');
-  $('nextRecurringSection').classList.add('hidden');
-  $('nextRecurringUntil').value = todayISO();
+  openRecurringPrompt(job);
 };
 window.showNextRecurringDate = () => $('nextRecurringSection').classList.remove('hidden');
 
-window.finishCompleteFlow = async (isRecurring) => {
+// choice: true = start a new series, false = complete only (non-recurring customer),
+// 'keep' = recurring customer, leave the schedule alone, 'cancel' = end the series
+window.finishCompleteFlow = async (choice) => {
   let job = jobs.find(j => j.id === completingJobId);
   if(!job) return;
+  if (choice === 'cancel') { await cancelRecurringFlow(job); return; }
+  const isRecurring = choice === true;
 
   // Validate before touching the job, so a missing date doesn't leave it half-completed
   let repeatOption = $('nextRecurringOption').value;
@@ -208,6 +233,77 @@ window.finishCompleteFlow = async (isRecurring) => {
 
   $('recurringModalBack').classList.remove('open');
   completingJobId = null;
+  fetchJobs();
+};
+
+// Ends a customer's repeat schedule: clears the repeat tag on every job that
+// carries it and marks their still-open upcoming visits as Cancelled.
+// `job` gets its tag cleared in memory and (when includeSelf) counts toward the
+// upcoming visits — its caller picks the final status and saves it.
+// Returns false when the user backs out or a save fails.
+async function endRecurringSeries(job, includeSelf = false) {
+  const key = customerKey(job);
+  const upcoming = jobs.filter(o =>
+    (includeSelf || o.id !== job.id) && isJob(o) && customerKey(o) === key &&
+    o.date >= todayISO() && isOpenJob(o));
+  if (upcoming.length && !confirm(
+    `This will also cancel ${upcoming.length} upcoming visit${upcoming.length === 1 ? '' : 's'} for ${job.customer}. Continue?`)) return false;
+
+  try {
+    job.repeat = 'none';
+    job.repeatUntil = '';
+    for (const o of jobs) {
+      if (o.id === job.id || !isJob(o) || customerKey(o) !== key) continue;
+      if (o.repeat && o.repeat !== 'none' && o.status !== 'Cancelled') {
+        o.repeat = 'none'; o.repeatUntil = '';
+        await sbSaveJob(o, true);
+      }
+    }
+    for (const o of upcoming) {
+      if (o.id === job.id) continue;      // caller decides this one's final status
+      o.status = 'Cancelled';
+      await sbSaveJob(o, true);
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error cancelling the recurring schedule. Please try again.');
+    fetchJobs();
+    return false;
+  }
+  return true;
+}
+
+// "Cancel Recurring" in the completion popup: this visit completes, the series ends
+async function cancelRecurringFlow(job) {
+  if (!await endRecurringSeries(job)) return;
+  try {
+    job.status = 'Completed';
+    await sbSaveJob(job, true);
+  } catch (err) {
+    console.error(err);
+    alert('Error completing the job. Please try again.');
+    fetchJobs();
+    return;
+  }
+
+  $('recurringModalBack').classList.remove('open');
+  completingJobId = null;
+  fetchJobs();
+}
+
+// "Cancel Series" on the Recurring Jobs list: ends the schedule. An open visit
+// still ahead is cancelled with it; visits already done or past stay as they are
+window.cancelJobSeries = async (jobId) => {
+  const job = jobs.find(j => j.id === jobId);
+  if (!job) return;
+  if (!await endRecurringSeries(job, true)) return;
+  try {
+    if (isOpenJob(job) && job.date >= todayISO()) job.status = 'Cancelled';
+    await sbSaveJob(job, true);
+  } catch (err) {
+    console.error(err);
+    alert('Error cancelling the recurring schedule. Please try again.');
+  }
   fetchJobs();
 };
 

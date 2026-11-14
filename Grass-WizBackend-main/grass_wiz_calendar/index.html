@@ -337,28 +337,34 @@
 
 <div class="modalback" id="recurringModalBack">
  <div class="modal" style="width: min(500px, 100%);">
-  <h2>Is this a recurring job?</h2>
-  <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">If yes, we will automatically schedule the next job.</p>
-  <div style="display:flex; gap:10px; margin-bottom:20px;">
-    <button class="secondary" style="flex:1;" onclick="finishCompleteFlow(false)">No</button>
-    <button class="primary" style="flex:1;" onclick="showNextRecurringDate()">Yes</button>
+  <h2 id="recurringModalTitle">Is this a recurring job?</h2>
+  <p id="recurringModalText" style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">If yes, we will automatically schedule the next job.</p>
+  <div id="recurringNewSection">
+    <div style="display:flex; gap:10px; margin-bottom:20px;">
+      <button class="secondary" style="flex:1;" onclick="finishCompleteFlow(false)">No</button>
+      <button class="primary" style="flex:1;" onclick="showNextRecurringDate()">Yes</button>
+    </div>
+    <div id="nextRecurringSection" class="hidden">
+      <div class="field" style="margin-bottom:20px;">
+        <label>Recurring Options</label>
+        <select id="nextRecurringOption">
+          <option value="weekly">Every week</option>
+          <option value="biweekly">Every 2 weeks</option>
+          <option value="monthly">Monthly (Same date)</option>
+          <option value="last_thursday">Monthly (Last Thursday)</option>
+          <option value="last_friday">Monthly (Last Friday)</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:20px;">
+        <label>Repeat Until</label>
+        <input type="date" id="nextRecurringUntil">
+      </div>
+      <button class="primary" style="width:100%; justify-content:center;" onclick="finishCompleteFlow(true)">Schedule Next Job(s)</button>
+    </div>
   </div>
-  <div id="nextRecurringSection" class="hidden">
-    <div class="field" style="margin-bottom:20px;">
-      <label>Recurring Options</label>
-      <select id="nextRecurringOption">
-        <option value="weekly">Every week</option>
-        <option value="biweekly">Every 2 weeks</option>
-        <option value="monthly">Monthly (Same date)</option>
-        <option value="last_thursday">Monthly (Last Thursday)</option>
-        <option value="last_friday">Monthly (Last Friday)</option>
-      </select>
-    </div>
-    <div class="field" style="margin-bottom:20px;">
-      <label>Repeat Until</label>
-      <input type="date" id="nextRecurringUntil">
-    </div>
-    <button class="primary" style="width:100%; justify-content:center;" onclick="finishCompleteFlow(true)">Schedule Next Job(s)</button>
+  <div id="recurringExistingSection" class="hidden" style="display:flex; gap:10px;">
+    <button class="primary" style="flex:1;" onclick="finishCompleteFlow('keep')"><i class="fas fa-sync-alt"></i> Keep Recurring</button>
+    <button class="danger" style="flex:1;" onclick="finishCompleteFlow('cancel')"><i class="fas fa-ban"></i> Cancel Recurring</button>
   </div>
  </div>
 </div>
